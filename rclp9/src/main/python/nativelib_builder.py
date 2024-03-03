@@ -3,25 +3,49 @@
 import os
 import glob
 import subprocess
+import sys
 
 def main():
     include_ops = "-I./build/generated/sources/headers/java/main"
-    ros = "/opt/ros/iron"
+
+    # check the ROS2 distribution
+    ros = "/opt/ros"
+    if os.path.exists("{}/iron".format(ros)):
+        ros_dist = "iron"
+    elif os.path.exists("{}/humble".format(ros)):
+        ros_dist = "humble"
+    else:
+        print("This ROS2 version is not supported.");
+        sys.exit(0)
+
+    ros = "{}/{}".format(ros, ros_dist)
+
 
     # ROS2 headers
     ros_include = "{}/include".format(ros);
-    module_include = ["builtin_interfaces",
-                      "rcl",
-                      "rcl_yaml_param_parser",
-                      "rcutils",
-                      "rmw",
-                      "rosidl_dynamic_typesupport",
-                      "rosidl_runtime_c",
-                      "rosidl_typesupport_interface",
-                      "service_msgs",
-                      "std_msgs",
-                      "type_description_interfaces"
-                      ]
+    if ros_dist == "iron":
+        module_include = ["builtin_interfaces",
+                          "rcl",
+                          "rcl_yaml_param_parser",
+                          "rcutils",
+                          "rmw",
+                          "rosidl_dynamic_typesupport",
+                          "rosidl_runtime_c",
+                          "rosidl_typesupport_interface",
+                          "service_msgs",
+                          "std_msgs",
+                          "type_description_interfaces"
+                          ]
+    else:
+        module_include = [ "rcl",
+                          "rcl_yaml_param_parser",
+                          "rcutils",
+                          "rmw",
+                          "rosidl_runtime_c",
+                          "rosidl_typesupport_interface",
+                          "std_msgs"
+        ]
+
     for target in module_include:
         include_ops = "{} -I{}/{}".format(include_ops, ros_include, target)
 
@@ -36,6 +60,7 @@ def main():
         include_ops = "{} -I{}/include -I{}/include/linux".format(include_ops, java_home, java_home)
     else:
         print("This operating system is not supported: {}.".format(os_name))
+        sys.exit(0)
 
     # rclp9 native libraries
     rclp9_lib_dir = "./libs/rclp9"
@@ -51,52 +76,92 @@ def main():
         os.makedirs(ros_lib_dir)
 
     ros_org_dir = "{}/lib".format(ros);
-    module_lib = ["ament_index_cpp",
-                  "builtin_interfaces__rosidl_generator_c",
-                  "builtin_interfaces__rosidl_typesupport_fastrtps_c",
-                  "builtin_interfaces__rosidl_typesupport_introspection_c",
-                  "fastcdr",
-                  "fastrtps",
-                  "rcl",
-                  "rcl_interfaces__rosidl_generator_c",
-                  "rcl_interfaces__rosidl_typesupport_c",
-                  "rcl_logging_interface",
-                  "rcl_logging_spdlog",
-                  "rcl_yaml_param_parser",
-                  "rcpputils",
-                  "rcutils",
-                  "rmw",
-                  "rmw_dds_common",
-                  "rmw_dds_common__rosidl_generator_c",
-                  "rmw_dds_common__rosidl_typesupport_cpp",
-                  "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
-                  "rmw_dds_common__rosidl_typesupport_introspection_cpp",
-                  "rmw_fastrtps_cpp",
-                  "rmw_fastrtps_shared_cpp",
-                  "rmw_implementation",
-                  "rosidl_dynamic_typesupport",
-                  "rosidl_dynamic_typesupport_fastrtps",
-                  "rosidl_runtime_c",
-                  "rosidl_typesupport_c",
-                  "rosidl_typesupport_cpp",
-                  "rosidl_typesupport_fastrtps_c",
-                  "rosidl_typesupport_fastrtps_cpp",
-                  "rosidl_typesupport_introspection_c",
-                  "rosidl_typesupport_introspection_cpp",
-                  "service_msgs__rosidl_generator_c",
-                  "std_msgs__rosidl_generator_c",
-                  "std_msgs__rosidl_typesupport_c",
-                  "std_msgs__rosidl_typesupport_fastrtps_c",
-                  "std_msgs__rosidl_typesupport_introspection_c",
-                  "tracetools",
-                  "type_description_interfaces__rosidl_generator_c",
-                  "type_description_interfaces__rosidl_typesupport_c"
-                  ]
+    if ros_dist == "iron":
+        module_lib = ["ament_index_cpp",
+                      "builtin_interfaces__rosidl_generator_c",
+                      "builtin_interfaces__rosidl_typesupport_fastrtps_c",
+                      "builtin_interfaces__rosidl_typesupport_introspection_c",
+                      "fastcdr",
+                      "fastrtps",
+                      "rcl",
+                      "rcl_interfaces__rosidl_generator_c",
+                      "rcl_interfaces__rosidl_typesupport_c",
+                      "rcl_logging_interface",
+                      "rcl_logging_spdlog",
+                      "rcl_yaml_param_parser",
+                      "rcpputils",
+                      "rcutils",
+                      "rmw",
+                      "rmw_dds_common",
+                      "rmw_dds_common__rosidl_generator_c",
+                      "rmw_dds_common__rosidl_typesupport_cpp",
+                      "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
+                      "rmw_dds_common__rosidl_typesupport_introspection_cpp",
+                      "rmw_fastrtps_cpp",
+                      "rmw_fastrtps_shared_cpp",
+                      "rmw_implementation",
+                      "rosidl_dynamic_typesupport",
+                      "rosidl_dynamic_typesupport_fastrtps",
+                      "rosidl_runtime_c",
+                      "rosidl_typesupport_c",
+                      "rosidl_typesupport_cpp",
+                      "rosidl_typesupport_fastrtps_c",
+                      "rosidl_typesupport_fastrtps_cpp",
+                      "rosidl_typesupport_introspection_c",
+                      "rosidl_typesupport_introspection_cpp",
+                      "service_msgs__rosidl_generator_c",
+                      "std_msgs__rosidl_generator_c",
+                      "std_msgs__rosidl_typesupport_c",
+                      "std_msgs__rosidl_typesupport_fastrtps_c",
+                      "std_msgs__rosidl_typesupport_introspection_c",
+                      "tracetools",
+                      "type_description_interfaces__rosidl_generator_c",
+                      "type_description_interfaces__rosidl_typesupport_c"
+                      ]
+        ros_lib_ops = "-lrcl -lrosidl_typesupport_c -lstd_msgs__rosidl_typesupport_c"
+    else:
+        module_lib = ["ament_index_cpp",
+                      "builtin_interfaces__rosidl_generator_c",
+                      "builtin_interfaces__rosidl_typesupport_fastrtps_c",
+                      "builtin_interfaces__rosidl_typesupport_introspection_c",
+                      "fastcdr",
+                      "fastrtps",
+                      "rcl",
+                      "rcl_interfaces__rosidl_generator_c",
+                      "rcl_interfaces__rosidl_typesupport_c",
+                      "rcl_logging_interface",
+                      "rcl_logging_spdlog",
+                      "rcl_yaml_param_parser",
+                      "rcpputils",
+                      "rcutils",
+                      "rmw",
+                      "rmw_dds_common",
+                      "rmw_dds_common__rosidl_generator_c",
+                      "rmw_dds_common__rosidl_typesupport_cpp",
+                      "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
+                      "rmw_dds_common__rosidl_typesupport_introspection_cpp",
+                      "rmw_fastrtps_cpp",
+                      "rmw_fastrtps_shared_cpp",
+                      "rmw_implementation",
+                      "rosidl_runtime_c",
+                      "rosidl_typesupport_c",
+                      "rosidl_typesupport_cpp",
+                      "rosidl_typesupport_fastrtps_c",
+                      "rosidl_typesupport_fastrtps_cpp",
+                      "rosidl_typesupport_introspection_c",
+                      "rosidl_typesupport_introspection_cpp",
+                      "std_msgs__rosidl_generator_c",
+                      "std_msgs__rosidl_typesupport_c",
+                      "std_msgs__rosidl_typesupport_fastrtps_c",
+                      "std_msgs__rosidl_typesupport_introspection_c",
+                      "tracetools"
+                      ]
+        ros_lib_ops = "-lrcl -lrcpputils -lrcutils -lrosidl_runtime_c -lstd_msgs__rosidl_typesupport_c -lstd_msgs__rosidl_generator_c"
+        #os.environ['AMENT_PREFIX_PATH'] = ros
+
     for target in module_lib:
         libname = "{}/lib{}.so*".format(ros_org_dir, target)
         subprocess.run("cp -f {} {}/".format(libname, ros_lib_dir), shell=True)
-
-    ros_lib_ops = "-lrcl -lrosidl_typesupport_c -lstd_msgs__rosidl_typesupport_c"
 
     # compile and link
     for file in files:
