@@ -4,9 +4,9 @@
 #include "rcl/error_handling.h"
 #include "rcl/init.h"
 
-#include "rclp9_rcljava_contexts_ContextImpl.h"
+#include "rclp9_rcljava_context_ContextImpl.h"
 
-JNIEXPORT void JNICALL Java_rclp9_rcljava_contexts_ContextImpl_nativeDispose(JNIEnv *, jclass, jlong handle){
+JNIEXPORT void JNICALL Java_rclp9_rcljava_context_ContextImpl_nativeDispose(JNIEnv *, jclass, jlong handle){
   if (handle == 0) {
     return;
   }
@@ -20,7 +20,7 @@ JNIEXPORT void JNICALL Java_rclp9_rcljava_contexts_ContextImpl_nativeDispose(JNI
   }
 }
 
-JNIEXPORT void JNICALL Java_rclp9_rcljava_contexts_ContextImpl_nativeInit(JNIEnv *, jclass, jlong context_handle){
+JNIEXPORT void JNICALL Java_rclp9_rcljava_context_ContextImpl_nativeInit(JNIEnv *, jclass, jlong context_handle){
     rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
     rcl_ret_t ret = rcl_init_options_init(&init_options, rcl_get_default_allocator());
     if (ret != RCL_RET_OK) {
@@ -52,12 +52,12 @@ JNIEXPORT void JNICALL Java_rclp9_rcljava_contexts_ContextImpl_nativeInit(JNIEnv
     }
 }
 
-JNIEXPORT jboolean JNICALL Java_rclp9_rcljava_contexts_ContextImpl_nativeIsValid(JNIEnv *, jclass, jlong context_handle){
+JNIEXPORT jboolean JNICALL Java_rclp9_rcljava_context_ContextImpl_nativeIsValid(JNIEnv *, jclass, jlong context_handle){
     rcl_context_t * context = reinterpret_cast<rcl_context_t *>(context_handle);
     return rcl_context_is_valid(context);
 }
 
-JNIEXPORT void JNICALL Java_rclp9_rcljava_contexts_ContextImpl_nativeShutdown(JNIEnv *, jclass, jlong context_handle){
+JNIEXPORT void JNICALL Java_rclp9_rcljava_context_ContextImpl_nativeShutdown(JNIEnv *, jclass, jlong context_handle){
     rcl_context_t * context = reinterpret_cast<rcl_context_t *>(context_handle);
     if(!rcl_context_is_valid(context)){
         return;

@@ -1,9 +1,9 @@
 package rclp9.rcljava.time;
 
-public interface  WallClockTimer extends Timer {
-    long getTimerPeriodNS();
+public interface WallClockTimer extends Timer {
+    long timerPeriodNS();
 
-    void setTimerPeriodNS(long period);
+    void timerPeriodNS(long period);
 
     boolean isCancelled();
 

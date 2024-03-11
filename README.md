@@ -3,7 +3,8 @@
 # What is this?
 
 ROS2 minimal client library for Processing. Currently, a minimal publisher,
-timer, and callback are available. Other functionalities are under development.
+a minimal subscriber, timer, and callback are available.
+Other functionalities are under development.
 Please note that only linux on x86 / arm is supported at this time.
 
 # Prerequirement

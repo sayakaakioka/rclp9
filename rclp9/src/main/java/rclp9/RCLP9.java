@@ -3,23 +3,25 @@
  */
 package rclp9;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Objects;
 
 import processing.core.*;
 
 import rclp9.rcljava.RCLJava;
 import rclp9.rcljava.interfaces.Callback;
 import rclp9.rcljava.interfaces.MessageDefinition;
-import rclp9.rcljava.node.BaseComposableNode;
+import rclp9.rcljava.node.ComposableNode;
 import rclp9.rcljava.node.Node;
 import rclp9.rcljava.publisher.Publisher;
+import rclp9.rcljava.subscriber.Subscriber;
 import rclp9.rcljava.time.WallClockTimer;
 
-public class RCLP9 extends BaseComposableNode {
+public final class RCLP9 implements ComposableNode {
     private static final Logger logger = Logger.getLogger(RCLP9.class.getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -30,9 +32,16 @@ public class RCLP9 extends BaseComposableNode {
      * The parent PApplet of this library.
      */
     @SuppressWarnings("unused")
-    private PApplet parent;
+    private final PApplet parent;
 
     private Publisher<? extends MessageDefinition> publisher;
+
+    private Subscriber<? extends MessageDefinition> subscriber;
+
+    private WallClockTimer wallclockTimer;
+
+    private final String name;
+    private final Node node;
 
     /**
      * A constructor, usually called in the setup() method in the sketch
@@ -41,61 +50,79 @@ public class RCLP9 extends BaseComposableNode {
      * @param p the parent PApplet
      */
     public RCLP9(final PApplet p, final String nodeName) {
-        super(nodeName);
-        this.parent = p;
+        this.parent = Objects.requireNonNull(p);
+
+        RCLJava.init();
+        this.name = Objects.requireNonNull(nodeName);
+        this.node = RCLJava.createNode(this.name);
         welcome();
     }
 
-    public Publisher<? extends MessageDefinition> createPublisher(final Class<? extends MessageDefinition> messageType,
+    public final <T extends MessageDefinition> Publisher<T> createPublisher(final Class<T> messageType,
             final String topic) {
-        return rclp9CreatePublisher(messageType, topic, node);
+        this.publisher = node().createPublisher(messageType, topic);
+        return (Publisher<T>) publisher;
     }
 
-    public WallClockTimer createWallClockTimer(final long period, final Callback callback) {
-        return node.createWallClockTimer(period, TimeUnit.MILLISECONDS, callback);
+    public final <T extends MessageDefinition> Subscriber<T> createSubscriber(final Class<T> messageType,
+            final String topic, Consumer<T> callback) {
+        this.subscriber = node().createSubscriber(messageType, topic, callback);
+        return (Subscriber<T>) subscriber;
+    }
+
+    public final WallClockTimer createWallClockTimer(final long period, final Callback callback) {
+        this.wallclockTimer = node().createWallClockTimer(period, TimeUnit.MILLISECONDS, callback);
+        return wallclockTimer;
     }
 
     /**
      * Anything here will be called whenever the parent sketch shuts down.
      */
-    public void dispose() {
+    public final void dispose() {
         shutdown();
     }
 
-    public Publisher<? extends MessageDefinition> getPublisher() {
+    @Override
+    public Node node() {
+        return node;
+    }
+
+    public final void publish(final MessageDefinition message) {
+        publish(Objects.requireNonNull(message), Objects.requireNonNull(publisher));
+    }
+
+    public final void publish(final MessageDefinition message, final Publisher<? extends MessageDefinition> publisher) {
+        Objects.requireNonNull(publisher).publish(Objects.requireNonNull(message));
+    }
+
+    public final Publisher<? extends MessageDefinition> publisher() {
         return publisher;
     }
 
-    public void publish(MessageDefinition message) {
-        publish(message, publisher);
-    }
-
-    public void publish(MessageDefinition message, Publisher<? extends MessageDefinition> publisher) {
-        Optional<Publisher<? extends MessageDefinition>> pub = Optional.ofNullable(publisher);
-        pub.ifPresent((p) -> p.publish(message));
-    }
-
-    public void spinPublisher() {
+    public final void spin() {
         RCLJava.spin(this);
     }
 
-    public void spinPublisherOnce() {
+    public final void spinOnce() {
         RCLJava.spinOnce(this);
     }
 
-    private Publisher<? extends MessageDefinition> rclp9CreatePublisher(
-            final Class<? extends MessageDefinition> messageType,
-            final String topic, Node node) {
-        publisher = node.createPublisher(messageType, topic);
-        return publisher;
-    }
-
-    public void shutdown() {
+    public final void shutdown() {
         logger.info("rclp9 is shutting down");
         RCLJava.shutdown();
     }
 
-    private void welcome() {
+    public final Subscriber<? extends MessageDefinition> subscriber() {
+        return subscriber;
+    }
+
+    @Override
+    public final String toString() {
+        return ("Instance of " + RCLP9.class.getName() + ", name = " + name + ", handle = "
+                + node.handle());
+    }
+
+    private final void welcome() {
         logger.info("rclp9 is starting");
     }
 }

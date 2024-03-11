@@ -1,5 +1,5 @@
-package rclp9.rcljava.events;
+package rclp9.rcljava.event;
 
 public interface PublisherEventStatus extends EventStatus {
-    int getPublisherEventType();
+    int publisherEventType();
 }

@@ -5,12 +5,13 @@ import java.util.Optional;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Objects;
 
 import rclp9.rcljava.interfaces.Callback;
 import rclp9.rcljava.node.Node;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
-public class WallClockTimerImpl implements WallClockTimer {
+public final class WallClockTimerImpl implements WallClockTimer {
     private static final Logger logger = Logger.getLogger(WallClockTimerImpl.class.getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -29,34 +30,33 @@ public class WallClockTimerImpl implements WallClockTimer {
     private final WeakReference<Node> nodeReference;
     private long handle;
     private final Callback callback;
-    private long timerPeriodNS;
+    private final long timerPeriodNS;
 
     public WallClockTimerImpl(final WeakReference<Node> nodeReference, final long handle, final Callback callback,
             final long timerPeriodNS) {
-        this.nodeReference = nodeReference;
-        this.handle = handle;
-        this.callback = callback;
-        this.timerPeriodNS = timerPeriodNS;
+        this.nodeReference = Objects.requireNonNull(nodeReference);
+        this.handle = Objects.requireNonNull(handle);
+        this.callback = Objects.requireNonNull(callback);
+        this.timerPeriodNS = Objects.requireNonNull(timerPeriodNS);
     }
 
     @Override
-    public void callTimer() {
+    public final void callTimer() {
         nativeCallTimer(this.handle);
     }
 
     @Override
-    public void executeCallback() {
-        logger.info("executeCallback() called");
+    public final void executeCallback() {
         this.callback.call();
     }
 
     @Override
-    public boolean isReady() {
+    public final boolean isReady() {
         return nativeIsReady(this.handle);
     }
 
     @Override
-    public void dispose() {
+    public final void dispose() {
         Optional<Node> node = Optional.ofNullable(this.nodeReference.get());
         node.ifPresentOrElse(
                 (n) -> {
@@ -69,43 +69,48 @@ public class WallClockTimerImpl implements WallClockTimer {
     }
 
     @Override
-    public long getHandle() {
+    public final long handle() {
         return this.handle;
     }
 
     @Override
-    public long getTimerPeriodNS() {
-        throw new UnsupportedOperationException("Unimplemented method 'getTimerPeriodNS()'");
-    }
-
-    @Override
-    public void setTimerPeriodNS(long period) {
-        throw new UnsupportedOperationException("Unimplemented method 'setTimerPeriodNS()'");
-    }
-
-    @Override
-    public boolean isCancelled() {
+    public final boolean isCancelled() {
         throw new UnsupportedOperationException("Unimplemented method 'isCancelled()'");
     }
 
     @Override
-    public void cancel() {
+    public final void cancel() {
         throw new UnsupportedOperationException("Unimplemented method 'cancel()'");
     }
 
     @Override
-    public void reset() {
+    public final void reset() {
         throw new UnsupportedOperationException("Unimplemented method 'reset()'");
     }
 
     @Override
-    public long timeSinceLastCall() {
+    public final long timerPeriodNS() {
+        throw new UnsupportedOperationException("Unimplemented method 'getTimerPeriodNS()'");
+    }
+
+    @Override
+    public final void timerPeriodNS(long period) {
+        throw new UnsupportedOperationException("Unimplemented method 'setTimerPeriodNS()'");
+    }
+
+    @Override
+    public final long timeSinceLastCall() {
         throw new UnsupportedOperationException("Unimplemented method 'timeSinceLastCall()'");
     }
 
     @Override
-    public long timeUntilNextCall() {
+    public final long timeUntilNextCall() {
         throw new UnsupportedOperationException("Unimplemented method 'timeUntilNextCall()'");
+    }
+
+    @Override
+    public final String toString() {
+        return ("Instance of " + WallClockTimerImpl.class.getName() + ", handle = " + handle);
     }
 
     private static native void nativeCallTimer(long handle);

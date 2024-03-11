@@ -3,11 +3,12 @@ package rclp9.rcljava.time;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Objects;
 
 import rclp9.rcljava.interfaces.Disposable;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
-public class Clock implements Disposable {
+public final class Clock implements Disposable {
     private static final Logger logger = Logger.getLogger(Clock.class.getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -26,20 +27,17 @@ public class Clock implements Disposable {
     private long handle;
 
     public Clock() {
-        this.handle = Clock.nativeCreateClockHandle();
+        this.handle = Objects.requireNonNull(Clock.nativeCreateClockHandle());
     }
 
     @Override
-    public void dispose() {
-        throw new UnsupportedOperationException("Unimplemented method 'dispose()'");
-        /*
-         * Clock.nativeDispose(this.handle);
-         * this.handle = 0;
-         */
+    public final void dispose() {
+        Clock.nativeDispose(this.handle);
+        this.handle = 0;
     }
 
     @Override
-    public long getHandle() {
+    public final long handle() {
         return this.handle;
     }
 

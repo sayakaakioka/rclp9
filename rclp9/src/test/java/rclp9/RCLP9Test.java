@@ -6,40 +6,75 @@ package rclp9;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import java.util.function.Consumer;
+
 import org.junit.jupiter.api.Test;
 
 import processing.core.*;
 
 class RCLP9Test extends PApplet {
-    private RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9");
+    private RCLP9 rclp9;
     private int counter;
 
-    @Test
-    public void testCreateAndDispose() {
-        rclp9.createPublisher(std_msgs.msg.String.class, "test_topic");
-        assertEquals(rclp9.getNode().getHandle(), rclp9.getPublisher().getNodeReference().get().getHandle());
-        assertNotEquals(0, rclp9.getPublisher().getNodeReference().get().getHandle());
-        assertNotEquals(0, rclp9.getPublisher().getHandle());
-        assertEquals(1, rclp9.getNode().getPublishers().size());
+    public RCLP9Test() {
+        super();
+        rclp9 = new RCLP9(this, "test_node_rclp9");
+    }
 
-        rclp9.dispose();
-        assertEquals(0, rclp9.getPublisher().getHandle());
-        assertEquals(0, rclp9.getNode().getPublishers().size());
+    @Test
+    public void testCreateAndDisposePublisher() {
+        RCLP9 obj = new RCLP9(this, "test_create_and_dispose_publisher");
+        obj.createPublisher(std_msgs.msg.String.class, "test_topic");
+        assertEquals(obj.node().handle(), obj.publisher().nodeReference().get().handle());
+        assertNotEquals(0, obj.publisher().nodeReference().get().handle());
+        assertNotEquals(0, obj.publisher().handle());
+        assertEquals(1, obj.node().publishers().size());
+
+        obj.dispose();
+        assertEquals(0, obj.publisher().handle());
+        assertEquals(0, obj.node().publishers().size());
+    }
+
+    @Test
+    public final void testCreateAndDisposeSubscriber() {
+        RCLP9 obj = new RCLP9(this, "test_create_and_dispose_subscriber");
+        obj.createSubscriber(std_msgs.msg.String.class, "test_topic", new Consumer<std_msgs.msg.String>() {
+            public void accept(final std_msgs.msg.String msg) {
+            }
+        });
+        assertEquals(obj.node().handle(), obj.subscriber().nodeReference().get().handle());
+        assertNotEquals(0, obj.subscriber().nodeReference().get().handle());
+        assertNotEquals(0, obj.subscriber().handle());
+        assertEquals(1, obj.node().subscribers().size());
+
+        obj.dispose();
+        assertEquals(0, obj.subscriber().handle());
+        assertEquals(0, obj.node().subscribers().size());
     }
 
     @Test
     public final void testFunctionalPublisher() {
         counter = 0;
         rclp9.createPublisher(std_msgs.msg.String.class, "test_topic");
-        rclp9.createWallClockTimer(500, this::timerCallback);
-        rclp9.spinPublisherOnce();
+        rclp9.createWallClockTimer(500, this::publisherCallback);
+        rclp9.spinOnce();
     }
 
-    private void timerCallback() {
+    @Test
+    public final void testFunctionalSubscriber() {
+        rclp9.createSubscriber(std_msgs.msg.String.class, "test_topic", this::subscriberCallback);
+        // rclp9.spinOnce();
+    }
+
+    private void publisherCallback() {
         var message = new std_msgs.msg.String();
-        message.setData("Hello, world! " + this.counter);
+        message.data("Hello, world! " + this.counter);
         this.counter++;
-        System.err.println("Publishing: [" + message.getData() + "]");
+        System.err.println("Publishing: [" + message.data() + "]");
         rclp9.publish(message);
+    }
+
+    private void subscriberCallback(final std_msgs.msg.String msg) {
+        System.out.println("Received: " + msg);
     }
 }

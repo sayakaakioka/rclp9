@@ -15,4 +15,6 @@ public interface Context extends Disposable {
      * @return true if the context is valid
      */
     boolean isValid();
+
+    String toString();
 }

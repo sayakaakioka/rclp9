@@ -5,9 +5,11 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Objects;
 
 import rclp9.rcljava.RCLJava;
 import rclp9.rcljava.interfaces.Callback;
@@ -16,13 +18,15 @@ import rclp9.rcljava.interfaces.Disposable;
 import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.publisher.Publisher;
 import rclp9.rcljava.publisher.PublisherImpl;
+import rclp9.rcljava.subscriber.Subscriber;
+import rclp9.rcljava.subscriber.SubscriberImpl;
 import rclp9.rcljava.time.Clock;
 import rclp9.rcljava.time.Timer;
 import rclp9.rcljava.time.WallClockTimer;
 import rclp9.rcljava.time.WallClockTimerImpl;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
-public class NodeImpl implements Node {
+public final class NodeImpl implements Node {
     private static final Logger logger = Logger.getLogger(NodeImpl.class.getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -39,49 +43,24 @@ public class NodeImpl implements Node {
     }
 
     private long handle;
-    private Context context;
-    private Collection<Publisher<? extends MessageDefinition>> publishers;
-    private Clock clock;
-    private Collection<Timer> timers;
-    private Object parametersMutex;
-    private boolean allowUndeclaredParameters;
-    private Object parameterCallbacksMutex;
+    private final Context context;
+    private final Clock clock;
+    private final Collection<Publisher<? extends MessageDefinition>> publishers;
+    private final Collection<Subscriber<? extends MessageDefinition>> subscribers;
+    private final Collection<Timer> timers;
 
-    public NodeImpl(final long handle, final Context context, final boolean allowUndeclaredParameters) {
-        this.handle = handle;
-        this.context = context;
-        this.allowUndeclaredParameters = allowUndeclaredParameters;
-        this.publishers = new LinkedBlockingQueue<Publisher<? extends MessageDefinition>>();
+    public NodeImpl(final long handle, final Context context) {
+        this.handle = Objects.requireNonNull(handle);
+        this.context = Objects.requireNonNull(context);
         this.clock = new Clock();
-        this.timers = new LinkedBlockingQueue<Timer>();
-        this.parametersMutex = new Object();
-        this.parameterCallbacksMutex = new Object();
+        this.publishers = new LinkedBlockingQueue<>();
+        this.subscribers = new LinkedBlockingQueue<>();
+        this.timers = new LinkedBlockingQueue<>();
     }
 
     @Override
-    public void dispose() {
-        cleanup();
-        nativeDispose(this.handle);
-        this.handle = 0;
-    }
-
-    @Override
-    public long getHandle() {
-        return this.handle;
-    }
-
-    @Override
-    public Collection<Publisher<? extends MessageDefinition>> getPublishers() {
-        return this.publishers;
-    }
-
-    @Override
-    public Collection<Timer> getTimers() {
-        return this.timers;
-    }
-
-    @Override
-    public <T extends MessageDefinition> Publisher<T> createPublisher(final Class<T> messageType, final String topic) {
+    public final <T extends MessageDefinition> Publisher<T> createPublisher(final Class<T> messageType,
+            final String topic) {
         var qosProfileHandle = RCLJava.convertQoSProfileToHandle();
         var publisherHandle = nativeCreatePublisherHandle(this.handle, messageType, topic, qosProfileHandle);
         RCLJava.disposeQoSProfile(qosProfileHandle);
@@ -91,36 +70,92 @@ public class NodeImpl implements Node {
         return publisher;
     }
 
-    public WallClockTimer createWallClockTimer(final long period, final TimeUnit unit, final Callback callback) {
+    @Override
+    public final <T extends MessageDefinition> Subscriber<T> createSubscriber(final Class<T> messageType,
+            final String topic, final Consumer<T> callback) {
+        var qosProfileHandle = RCLJava.convertQoSProfileToHandle();
+        var subscriberHandle = nativeCreateSubscriberHandle(this.handle, messageType, topic, qosProfileHandle);
+        RCLJava.disposeQoSProfile(qosProfileHandle);
+
+        var subscriber = new SubscriberImpl<T>(new WeakReference<Node>(this), subscriberHandle, messageType, topic,
+                callback);
+        this.subscribers.add(subscriber);
+        return subscriber;
+    }
+
+    @Override
+    public final WallClockTimer createWallClockTimer(final long period, final TimeUnit unit, final Callback callback) {
         var timerPeriodNS = TimeUnit.NANOSECONDS.convert(period, unit);
-        var timerHandle = nativeCreateTimerHandle(clock.getHandle(), context.getHandle(), timerPeriodNS);
+        var timerHandle = nativeCreateTimerHandle(clock.handle(), context.handle(), timerPeriodNS);
         var timer = new WallClockTimerImpl(new WeakReference<Node>(this), timerHandle, callback, timerPeriodNS);
         this.timers.add(timer);
         return timer;
     }
 
     @Override
-    public boolean removePublisher(final Publisher<? extends MessageDefinition> publisher) {
+    public final void dispose() {
+        cleanup();
+        nativeDispose(this.handle);
+        this.handle = 0;
+    }
+
+    @Override
+    public final long handle() {
+        return this.handle;
+    }
+
+    @Override
+    public final Collection<Publisher<? extends MessageDefinition>> publishers() {
+        return this.publishers;
+    }
+
+    @Override
+    public final Collection<Subscriber<? extends MessageDefinition>> subscribers() {
+        return this.subscribers;
+    }
+
+    @Override
+    public final Collection<Timer> timers() {
+        return this.timers;
+    }
+
+    @Override
+    public final <T extends MessageDefinition> boolean removePublisher(final Publisher<T> publisher) {
         return this.publishers.remove(publisher);
+    }
+
+    @Override
+    public final <T extends MessageDefinition> boolean removeSubscriber(final Subscriber<T> subscriber) {
+        return this.subscribers.remove(subscriber);
+    }
+
+    @Override
+    public final String toString() {
+        return ("Instance of " + NodeImpl.class.getName() + ", handle = " + handle);
     }
 
     private void cleanup() {
         cleanupDisposables(publishers);
+        cleanupDisposables(subscribers);
         cleanupDisposables(timers);
     }
 
-    private <T extends Disposable> void cleanupDisposables(Collection<T> disposables) {
+    private <T extends Disposable> void cleanupDisposables(final Collection<T> disposables) {
         for (Disposable disposable : disposables) {
             disposable.dispose();
         }
         disposables.clear();
     }
 
+    private static native <T extends MessageDefinition> long nativeCreatePublisherHandle(long handle,
+            Class<T> messageType, String topic,
+            long qosProfileHandle);
+
+    private static native <T extends MessageDefinition> long nativeCreateSubscriberHandle(long handle,
+            Class<T> messageType, String topic,
+            long qosProfileHandle);
+
     private static native long nativeCreateTimerHandle(long clockHandle, long contextHandle, long timerPeriod);
 
-    private static native <T extends MessageDefinition> long nativeCreatePublisherHandle(long handle,
-            Class<T> messageType, String topic, long qosProfileHandle);
-
     private static native void nativeDispose(long handle);
-
 }

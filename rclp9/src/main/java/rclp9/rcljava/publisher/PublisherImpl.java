@@ -4,22 +4,23 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Objects;
 
-import rclp9.rcljava.consumers.Consumer;
-import rclp9.rcljava.events.EventHandler;
-import rclp9.rcljava.events.EventHandlerImpl;
-import rclp9.rcljava.events.EventStatus;
-import rclp9.rcljava.events.PublisherEventStatus;
+import rclp9.rcljava.event.EventHandler;
+import rclp9.rcljava.event.EventHandlerImpl;
+import rclp9.rcljava.event.EventStatus;
+import rclp9.rcljava.event.PublisherEventStatus;
 import rclp9.rcljava.interfaces.Disposable;
 import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.node.Node;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
-public class PublisherImpl<T extends MessageDefinition> implements Publisher<T> {
+public final class PublisherImpl<T1 extends MessageDefinition> implements Publisher<T1> {
     private static final Logger logger = Logger.getLogger(PublisherImpl.class.getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -35,20 +36,41 @@ public class PublisherImpl<T extends MessageDefinition> implements Publisher<T> 
         }
     }
 
-    private WeakReference<Node> nodeReference;
+    private final WeakReference<Node> nodeReference;
     private long handle;
-    private String topic;
-    private Collection<EventHandler<? extends EventStatus, ? extends Disposable>> eventHandlers;
+    private final String topic;
+    private final Collection<EventHandler<? extends EventStatus, ? extends Disposable>> eventHandlers;
 
     public PublisherImpl(final WeakReference<Node> nodeReference, final long handle, final String topic) {
-        this.nodeReference = nodeReference;
-        this.handle = handle;
-        this.topic = topic;
-        this.eventHandlers = new LinkedBlockingQueue<EventHandler<? extends EventStatus, ? extends Disposable>>();
+        this.nodeReference = Objects.requireNonNull(nodeReference);
+        this.handle = Objects.requireNonNull(handle);
+        this.topic = Objects.requireNonNull(topic);
+        this.eventHandlers = new LinkedBlockingQueue<>();
     }
 
     @Override
-    public void dispose() {
+    public final <T2 extends PublisherEventStatus> EventHandler<T2, Publisher<T1>> createEventHandler(
+            Supplier<T2> factory, Consumer<T2> callback) {
+        var weakEventHandlers = new WeakReference<Collection<EventHandler<? extends EventStatus, ? extends Disposable>>>(
+                this.eventHandlers);
+        var disposeCallback = new Consumer<EventHandler<T2, Publisher<T1>>>() {
+            public void accept(EventHandler<T2, Publisher<T1>> eventHandler) {
+                var eventHandlers = weakEventHandlers.get();
+                eventHandlers.remove(eventHandler);
+
+            }
+        };
+
+        var status = factory.get();
+        var eventHandle = nativeCreateEvent(this.handle, status.publisherEventType());
+        var eventHandler = new EventHandlerImpl<T2, Publisher<T1>>(new WeakReference<Publisher<T1>>(this), eventHandle,
+                factory, callback, disposeCallback);
+        this.eventHandlers.add(eventHandler);
+        return eventHandler;
+    }
+
+    @Override
+    public final void dispose() {
         for (var eventHandler : this.eventHandlers) {
             eventHandler.dispose();
         }
@@ -57,18 +79,23 @@ public class PublisherImpl<T extends MessageDefinition> implements Publisher<T> 
         Optional<Node> node = Optional.ofNullable(this.nodeReference.get());
         node.ifPresent((n) -> {
             n.removePublisher(this);
-            nativeDispose(n.getHandle(), this.handle);
+            nativeDispose(n.handle(), this.handle);
             this.handle = 0;
         });
     }
 
     @Override
-    public final long getHandle() {
+    public final Collection<EventHandler<? extends EventStatus, ? extends Disposable>> eventHandlers() {
+        return this.eventHandlers;
+    }
+
+    @Override
+    public final long handle() {
         return this.handle;
     }
 
     @Override
-    public final WeakReference<Node> getNodeReference() {
+    public final WeakReference<Node> nodeReference() {
         return this.nodeReference;
     }
 
@@ -78,29 +105,8 @@ public class PublisherImpl<T extends MessageDefinition> implements Publisher<T> 
     }
 
     @Override
-    public <S extends PublisherEventStatus> EventHandler<S, Publisher<T>> createEventHandler(Supplier<S> factory,
-            Consumer<S> callback) {
-        final var weakEventHandlers = new WeakReference<Collection<EventHandler<? extends EventStatus, ? extends Disposable>>>(
-                this.eventHandlers);
-        var disposeCallback = new Consumer<EventHandler<S, Publisher<T>>>() {
-            public void accept(EventHandler<S, Publisher<T>> eventHandler) {
-                var eventHandlers = weakEventHandlers.get();
-                eventHandlers.remove(eventHandler);
-
-            }
-        };
-
-        var status = factory.get();
-        var eventHandle = nativeCreateEvent(this.handle, status.getPublisherEventType());
-        var eventHandler = new EventHandlerImpl<S, Publisher<T>>(new WeakReference<Publisher<T>>(this), eventHandle,
-                factory, callback, disposeCallback);
-        this.eventHandlers.add(eventHandler);
-        return eventHandler;
-    }
-
-    @Override
-    public final void removeEventHandler(
-            EventHandler<? extends PublisherEventStatus, Publisher<T>> eventHandler) {
+    public final <T2 extends PublisherEventStatus> void removeEventHandler(
+            EventHandler<T2, Publisher<T1>> eventHandler) {
         if (this.eventHandlers.remove(eventHandler)) {
             throw new IllegalArgumentException("The passed eventHandler was not created by this publisher");
         }
@@ -108,8 +114,8 @@ public class PublisherImpl<T extends MessageDefinition> implements Publisher<T> 
     }
 
     @Override
-    public final Collection<EventHandler<? extends EventStatus, ? extends Disposable>> getEventHandlers() {
-        return this.eventHandlers;
+    public final String toString() {
+        return ("Instance of " + PublisherImpl.class.getName() + ", handle = " + handle + ", topic = " + topic);
     }
 
     private static native long nativeCreateEvent(long handle, int eventType);

@@ -10,13 +10,13 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import rclp9.rcljava.contexts.ContextImpl;
-import rclp9.rcljava.executors.SingleThreadedExecutor;
+import rclp9.rcljava.context.ContextImpl;
+import rclp9.rcljava.executor.SingleThreadedExecutor;
 import rclp9.rcljava.interfaces.Context;
 import rclp9.rcljava.node.ComposableNode;
 import rclp9.rcljava.node.Node;
 import rclp9.rcljava.node.NodeImpl;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
 public final class RCLJava {
     private static final Logger logger = Logger.getLogger(RCLJava.class.getName());
@@ -34,73 +34,82 @@ public final class RCLJava {
         }
     }
 
+    private RCLJava() {
+        throw new AssertionError();
+    }
+
     private static ContextImpl defaultContext;
-    private static Collection<Node> nodes = new LinkedBlockingQueue<Node>();;
-    private static Collection<Context> contexts = new LinkedBlockingQueue<Context>();
+    private final static Collection<Node> nodes = new LinkedBlockingQueue<>();
+    private final static Collection<Context> contexts = new LinkedBlockingQueue<>();
     private static SingleThreadedExecutor globalExecutor = null;
 
-    public static long convertQoSProfileToHandle() {
+    public final static long convertQoSProfileToHandle() {
         var deadline = Duration.ofSeconds(0, 0);
         return nativeConvertQoSProfileToHandle(2, 0, 0, 0,
                 deadline.getSeconds(), deadline.getNano(), deadline.getSeconds(), deadline.getNano(),
                 0, deadline.getSeconds(), deadline.getNano(), false);
     }
 
-    public static Node createNode(final String nodeName) {
-        return createNode(nodeName, "", RCLJava.getDefaultContext());
+    public final static Node createNode(final String nodeName) {
+        var context = RCLJava.defaultContext();
+        return createNode(nodeName, "", context);
     }
 
-    public static void disposeQoSProfile(final long qosProfileHandle) {
-        nativeDisposeQoSProfile(qosProfileHandle);
-    }
-
-    public static synchronized ContextImpl getDefaultContext() {
-        Optional<ContextImpl> context = Optional.ofNullable(RCLJava.defaultContext);
-        RCLJava.defaultContext = context.orElseGet(() -> new ContextImpl(nativeCreateContextHandle()));
+    public final static synchronized ContextImpl defaultContext() {
+        if (RCLJava.defaultContext == null) {
+            long handle = nativeCreateContextHandle();
+            RCLJava.defaultContext = new ContextImpl(handle);
+        }
         return RCLJava.defaultContext;
     }
 
-    public static synchronized void shutdown() {
-        cleanup();
-        if (RCLJava.defaultContext != null) {
-            RCLJava.defaultContext.dispose();
-            RCLJava.defaultContext = null;
-        }
+    public final static void disposeQoSProfile(final long qosProfileHandle) {
+        nativeDisposeQoSProfile(qosProfileHandle);
     }
 
-    public static void spin(final ComposableNode composableNode) {
-        getGlobalExecutor().addNode(composableNode);
-        getGlobalExecutor().spin();
-        getGlobalExecutor().removeNode(composableNode);
-    }
-
-    public static void spinOnce(final ComposableNode composableNode) {
-        getGlobalExecutor().addNode(composableNode);
-        getGlobalExecutor().spinOnce();
-        getGlobalExecutor().removeNode(composableNode);
-    }
 
     /**
      * Initialize RCLJava.
      */
-    public static synchronized void init() {
+    public static final synchronized void init() {
         logger.info("start initializing the environment\n");
-        if (RCLJava.getDefaultContext().isValid()) {
+        if (RCLJava.defaultContext().isValid()) {
             logger.info("Default context is valid.");
             return;
         }
 
-        getDefaultContext().init();
+        defaultContext().init();
 
         var str = nativeGetRMWIdentifier();
         logger.info(String.format("RMW implementation is %s", str));
     }
 
-    public static boolean isReady() {
-        return RCLJava.getDefaultContext().isValid();
+    public static final boolean isReady() {
+        return RCLJava.defaultContext().isValid();
     }
 
-    private static void cleanup() {
+    public static final void spin(final ComposableNode composableNode) {
+        globalExecutor().addNode(composableNode);
+        globalExecutor().spin();
+        globalExecutor().removeNode(composableNode);
+    }
+
+    public static final void spinOnce(final ComposableNode composableNode) {
+        globalExecutor().addNode(composableNode);
+        globalExecutor().spinOnce();
+        globalExecutor().removeNode(composableNode);
+    }
+
+    public final static synchronized void shutdown() {
+        cleanup();
+        Optional<ContextImpl> context = Optional.ofNullable(RCLJava.defaultContext());
+        context.ifPresent((c) -> {
+            RCLJava.defaultContext().dispose();
+            RCLJava.defaultContext = null;
+        });
+    }
+
+    private static final void cleanup() {
         for (var node : nodes) {
             node.dispose();
         }
@@ -113,13 +122,13 @@ public final class RCLJava {
     }
 
     private static Node createNode(final String nodeName, final String namespace, final Context context) {
-        var nodeHandle = nativeCreateNodeHandle(nodeName, namespace, context.getHandle(), new ArrayList<String>());
-        var node = new NodeImpl(nodeHandle, context, false);
+        var nodeHandle = nativeCreateNodeHandle(nodeName, namespace, context.handle(), new ArrayList<String>());
+        var node = new NodeImpl(nodeHandle, context);
         nodes.add(node);
         return node;
     }
 
-    private static SingleThreadedExecutor getGlobalExecutor() {
+    private static SingleThreadedExecutor globalExecutor() {
         synchronized (RCLJava.class) {
             Optional<SingleThreadedExecutor> executor = Optional.ofNullable(globalExecutor);
             globalExecutor = executor.orElseGet(() -> new SingleThreadedExecutor());

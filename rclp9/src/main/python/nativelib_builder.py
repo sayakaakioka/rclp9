@@ -118,7 +118,6 @@ def main():
                       "type_description_interfaces__rosidl_generator_c",
                       "type_description_interfaces__rosidl_typesupport_c"
                       ]
-        ros_lib_ops = "-lrcl -lrosidl_typesupport_c -lstd_msgs__rosidl_typesupport_c"
     else:
         module_lib = ["ament_index_cpp",
                       "builtin_interfaces__rosidl_generator_c",
@@ -156,10 +155,10 @@ def main():
                       "std_msgs__rosidl_typesupport_introspection_c",
                       "tracetools"
                       ]
-        ros_lib_ops = "-lrcl -lrcpputils -lrcutils -lrosidl_runtime_c -lstd_msgs__rosidl_typesupport_c -lstd_msgs__rosidl_generator_c"
-        #os.environ['AMENT_PREFIX_PATH'] = ros
 
+    ros_lib_ops = ""
     for target in module_lib:
+        ros_lib_ops = "{} -l{}".format(ros_lib_ops, target)
         libname = "{}/lib{}.so*".format(ros_org_dir, target)
         subprocess.run("cp -f {} {}/".format(libname, ros_lib_dir), shell=True)
 

@@ -38,6 +38,22 @@ std_msgs__msg__String * std_msgs_String__convert_from_java(jobject _jmessage_obj
     return ros_message;
 }
 
+jobject std_msgs_String__convert_to_java(std_msgs__msg__String * _ros_message, jobject _jmessage_obj){
+  JNIEnv * env = nullptr;
+  g_vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
+
+  if (_jmessage_obj == nullptr) {
+    _jmessage_obj = env->NewObject(_jstd_msgs__msg__String_class_global, _jstd_msgs__msg__String_constructor_global);
+  }
+
+  auto _jfield_data_fid = env->GetFieldID(_jstd_msgs__msg__String_class_global, "data", "Ljava/lang/String;");
+  if (_ros_message->data.data != nullptr) {
+    env->SetObjectField(_jmessage_obj, _jfield_data_fid, env->NewStringUTF(_ros_message->data.data));
+  }
+
+  return _jmessage_obj;
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void *){
     if (g_vm == nullptr) {
         g_vm = vm;
@@ -73,6 +89,10 @@ JNIEXPORT jlong JNICALL Java_std_1msgs_msg_String_getDestructor(JNIEnv *, jclass
 
 JNIEXPORT jlong JNICALL Java_std_1msgs_msg_String_getFromJavaConverter(JNIEnv *, jclass){
     return reinterpret_cast<jlong>(&std_msgs_String__convert_from_java);
+}
+
+JNIEXPORT jlong JNICALL Java_std_1msgs_msg_String_getToJavaConverter(JNIEnv *, jclass){
+    return reinterpret_cast<jlong>(std_msgs_String__convert_to_java);
 }
 
 JNIEXPORT jlong JNICALL Java_std_1msgs_msg_String_getTypeSupport(JNIEnv *, jclass){

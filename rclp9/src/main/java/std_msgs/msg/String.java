@@ -5,7 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import rclp9.rcljava.interfaces.MessageDefinition;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
 public final class String implements MessageDefinition {
     private static final Logger logger = Logger.getLogger(String.class.getName());
@@ -25,41 +25,45 @@ public final class String implements MessageDefinition {
 
     private java.lang.String data = "";
 
+    public java.lang.String data() {
+        return this.data;
+    }
+
+    public final void data(final java.lang.String data) {
+        this.data = data;
+    }
+
     @Override
-    public long getFromJavaConverterInstance() {
+    public final long getFromJavaConverterInstance() {
         return String.getFromJavaConverter();
     }
 
     @Override
-    public long getToJavaConverterInstance() {
-        throw new UnsupportedOperationException("Unimplemented method 'getToJavaConverterInstance()'");
-        // return String.getToJavaConverter();
+    public final long getToJavaConverterInstance() {
+        return String.getToJavaConverter();
     }
 
     @Override
-    public long getTypeSupportInstance() {
+    public final long getTypeSupportInstance() {
         return String.getTypeSupport();
     }
 
-    public java.lang.String getData() {
-        return this.data;
-    }
-
     @Override
-    public long getDestructorInstance() {
+    public final long getDestructorInstance() {
         return String.getDestructor();
     }
 
-    public void setData(final java.lang.String data) {
-        this.data = data;
+    @Override
+    public final java.lang.String toString() {
+        return this.data();
     }
 
-    private static native long getDestructor();
+    private static native final long getDestructor();
 
-    private static native long getFromJavaConverter();
+    private static native final long getFromJavaConverter();
 
-    private static native long getToJavaConverter();
+    private static native final long getToJavaConverter();
 
-    private static native long getTypeSupport();
+    private static native final long getTypeSupport();
 
 }

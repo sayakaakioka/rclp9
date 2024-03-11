@@ -1,17 +1,18 @@
-package rclp9.rcljava.events;
+package rclp9.rcljava.event;
 
 import java.lang.ref.WeakReference;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Objects;
 
-import rclp9.rcljava.consumers.Consumer;
 import rclp9.rcljava.interfaces.Disposable;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
-public class EventHandlerImpl<U extends EventStatus, V extends Disposable> implements EventHandler<U, V> {
+public final class EventHandlerImpl<U extends EventStatus, V extends Disposable> implements EventHandler<U, V> {
     private static final Logger logger = Logger.getLogger(EventHandlerImpl.class.getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -36,15 +37,15 @@ public class EventHandlerImpl<U extends EventStatus, V extends Disposable> imple
     public EventHandlerImpl(final WeakReference<V> parentReference, final long handle,
             final Supplier<U> eventStatusFactory, final Consumer<U> callback,
             final Consumer<EventHandler<U, V>> disposeCallback) {
-        this.parentReference = parentReference;
-        this.handle = handle;
-        this.eventStatusFactory = eventStatusFactory;
-        this.callback = callback;
-        this.disposeCallback = disposeCallback;
+        this.parentReference = Objects.requireNonNull(parentReference);
+        this.handle = Objects.requireNonNull(handle);
+        this.eventStatusFactory = Objects.requireNonNull(eventStatusFactory);
+        this.callback = Objects.requireNonNull(callback);
+        this.disposeCallback = Objects.requireNonNull(disposeCallback);
     }
 
     @Override
-    public void dispose() {
+    public final void dispose() {
         if (this.handle == 0) {
             return;
         }
@@ -55,17 +56,12 @@ public class EventHandlerImpl<U extends EventStatus, V extends Disposable> imple
     }
 
     @Override
-    public final long getHandle() {
+    public final long handle() {
         return this.handle;
     }
 
     @Override
-    public final WeakReference<V> getParentReference() {
-        return this.parentReference;
-    }
-
-    @Override
-    public void executeCallback() {
+    public final void executeCallback() {
         Optional<U> eventStatus = Optional.ofNullable(eventStatusFactory.get());
         eventStatus.ifPresent((s) -> {
             long nativeEventStatusHandle = s.allocateRCLStatusEvent();
@@ -74,6 +70,16 @@ public class EventHandlerImpl<U extends EventStatus, V extends Disposable> imple
             s.deallocateRCLStatusEvent(nativeEventStatusHandle);
             this.callback.accept(s);
         });
+    }
+
+    @Override
+    public final WeakReference<V> parentReference() {
+        return this.parentReference;
+    }
+
+    @Override
+    public final String toString() {
+        return ("Instance of " + EventHandlerImpl.class.getName() + ", handle = " + handle);
     }
 
     private static native void nativeDispose(long Handle);

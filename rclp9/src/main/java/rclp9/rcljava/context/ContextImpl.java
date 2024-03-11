@@ -1,13 +1,14 @@
-package rclp9.rcljava.contexts;
+package rclp9.rcljava.context;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Objects;
 
 import rclp9.rcljava.interfaces.Context;
-import rclp9.rcljava.utils.JNIUtils;
+import rclp9.rcljava.util.JNIUtils;
 
-public class ContextImpl implements Context {
+public final class ContextImpl implements Context {
     private static final Logger logger = Logger.getLogger(ContextImpl.class.getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -23,41 +24,49 @@ public class ContextImpl implements Context {
         }
     }
 
-    private long handle; // a pointer to the underlying context structure (rcl_context_t)
+    private long handle;
 
-    public ContextImpl(final long handle){
-        this.handle = handle;
+    public ContextImpl(final long handle) {
+        this.handle = Objects.requireNonNull(handle);
     }
 
     @Override
-    public void dispose() {
+    public final void dispose() {
         shutdown();
         nativeDispose(this.handle);
         this.handle = 0;
     }
 
     @Override
-    public long getHandle() {
+    public final long handle() {
         return this.handle;
     }
 
     @Override
-    public void init() {
+    public final void init() {
         nativeInit(this.handle);
     }
 
     @Override
-    public void shutdown() {
+    public final boolean isValid() {
+        return nativeIsValid(this.handle);
+    }
+
+    @Override
+    public final void shutdown() {
         nativeShutdown(this.handle);
     }
 
     @Override
-    public boolean isValid() {
-        return nativeIsValid(this.handle);
+    public final String toString() {
+        return ("Instance of " + ContextImpl.class.getName() + ", handle = " + handle);
     }
 
     private static native void nativeDispose(long handle);
+
     private static native void nativeInit(long handle);
+
     private static native void nativeShutdown(long handle);
+
     private static native boolean nativeIsValid(long handle);
 }
