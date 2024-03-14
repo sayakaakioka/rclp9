@@ -10,17 +10,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import rclp9.rcljava.RCLJava;
-import rclp9.rcljava.event.EventHandler;
-import rclp9.rcljava.event.EventStatus;
-import rclp9.rcljava.interfaces.Disposable;
 import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.node.ComposableNode;
 import rclp9.rcljava.subscriber.Subscriber;
 import rclp9.rcljava.time.Timer;
 import rclp9.rcljava.util.JNIUtils;
 
+/**
+ * This class privdes an implementation of the Executor interface.
+ * This executor sequentially processes timers and subscribers.
+ */
 public final class SingleThreadedExecutor implements Executor {
-    private static final Logger logger = Logger.getLogger(SingleThreadedExecutor.class.getName());
+    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -28,7 +29,7 @@ public final class SingleThreadedExecutor implements Executor {
 
     static {
         try {
-            JNIUtils.loadImplementation(SingleThreadedExecutor.class);
+            JNIUtils.loadImplementation(new Object(){}.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
             logger.severe("Failed to load native library.");
             System.exit(1);
@@ -38,24 +39,40 @@ public final class SingleThreadedExecutor implements Executor {
     private final List<ComposableNode> nodes = new ArrayList<>();
     private final List<Map.Entry<Long, Timer>> timerHandlers = new ArrayList<>();
     private final List<Map.Entry<Long, Subscriber<? extends MessageDefinition>>> subscriberHandlers = new ArrayList<>();
-    private final List<Map.Entry<Long, EventHandler<? extends EventStatus, ? extends Disposable>>> eventHandlers = new ArrayList<>();
     private boolean executed = false;
 
+    /**
+     * Constructor performs no operations.
+     */
+    public SingleThreadedExecutor(){}
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void addNode(final ComposableNode node) {
         this.nodes.add(node);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void removeNode(final ComposableNode node) {
         this.nodes.remove(node);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void spinOnce() {
         this.spinOnce(-1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void spinOnce(final long timeout) {
         if(!executeExecutables()){
@@ -64,6 +81,9 @@ public final class SingleThreadedExecutor implements Executor {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void spin() {
         while (RCLJava.isReady()) {
@@ -96,20 +116,6 @@ public final class SingleThreadedExecutor implements Executor {
                 executed = true;
             });
         }
-
-        for (var entry : this.eventHandlers) {
-            Optional<EventHandler<? extends EventStatus, ? extends Disposable>> eventHandler = Optional.ofNullable(entry.getValue());
-            eventHandler.ifPresent((h) ->{
-                entry.setValue(null);
-                
-                h.executeCallback();
-                this.eventHandlers.remove(
-                    new AbstractMap.SimpleEntry<Long, EventHandler<? extends EventStatus, ? extends Disposable>>(h.handle(), h)
-                );
-                executed = true;
-            });
-        }
-
         return executed;
     }
 
@@ -124,27 +130,12 @@ public final class SingleThreadedExecutor implements Executor {
     private void waitForWork(final long timeout) {
         this.timerHandlers.clear();
         this.subscriberHandlers.clear();
-        this.eventHandlers.clear();
 
         for (var composableNode : this.nodes) {
             for (var subscriber : composableNode.node().subscribers()) {
                 this.subscriberHandlers
                         .add(new AbstractMap.SimpleEntry<Long, Subscriber<? extends MessageDefinition>>(
                                 subscriber.handle(), subscriber));
-
-                for (var eventHandler : subscriber.eventHandlers()) {
-                    this.eventHandlers.add(
-                            new AbstractMap.SimpleEntry<Long, EventHandler<? extends EventStatus, ? extends Disposable>>(
-                                    eventHandler.handle(), eventHandler));
-                }
-            }
-
-            for (var publisher : composableNode.node().publishers()) {
-                for (var eventHandler : publisher.eventHandlers()) {
-                    this.eventHandlers.add(
-                            new AbstractMap.SimpleEntry<Long, EventHandler<? extends EventStatus, ? extends Disposable>>(
-                                    eventHandler.handle(), eventHandler));
-                }
             }
 
             for (var timer : composableNode.node().timers()) {
@@ -154,7 +145,6 @@ public final class SingleThreadedExecutor implements Executor {
 
         int subscribersSize = 0;
         int timersSize = 0;
-        int eventsSize = this.eventHandlers.size();
 
         for (var composableNode : this.nodes) {
             subscribersSize += composableNode.node().subscribers().size();
@@ -168,7 +158,7 @@ public final class SingleThreadedExecutor implements Executor {
         long waitSetHandle = nativeGetZeroInitializedWaitSet();
         long contextHandle = RCLJava.defaultContext().handle();
         nativeWaitSetInit(waitSetHandle, contextHandle, subscribersSize, 0, timersSize, 0, 0,
-                eventsSize);
+                0);
         nativeWaitSetClear(waitSetHandle);
 
         for (var entry : this.subscriberHandlers) {
@@ -177,10 +167,6 @@ public final class SingleThreadedExecutor implements Executor {
 
         for (var entry : this.timerHandlers) {
             nativeWaitSetAddTimer(waitSetHandle, entry.getKey());
-        }
-
-        for (var entry : this.eventHandlers) {
-            nativeWaitSetAddEvent(waitSetHandle, entry.getKey());
         }
 
         nativeWait(waitSetHandle, timeout);
@@ -194,12 +180,6 @@ public final class SingleThreadedExecutor implements Executor {
         for (int i = 0; i < this.timerHandlers.size(); ++i) {
             if (!nativeWaitSetTimerIsReady(waitSetHandle, i)) {
                 this.timerHandlers.get(i).setValue(null);
-            }
-        }
-
-        for (int i = 0; i < this.eventHandlers.size(); ++i) {
-            if (!nativeWaitSetEventIsReady(waitSetHandle, i)) {
-                this.eventHandlers.get(i).setValue(null);
             }
         }
 
@@ -221,16 +201,6 @@ public final class SingleThreadedExecutor implements Executor {
             }
         }
 
-        var eventIterator = this.eventHandlers.iterator();
-        while (eventIterator.hasNext()) {
-            var entry = eventIterator.next();
-            Optional<EventHandler<? extends EventStatus, ? extends Disposable>> eventHandler = Optional
-                    .ofNullable(entry.getValue());
-            if (eventHandler.isEmpty()) {
-                eventIterator.remove();
-            }
-        }
-
         nativeDisposeWaitSet(waitSetHandle);
     }
 
@@ -243,15 +213,11 @@ public final class SingleThreadedExecutor implements Executor {
 
     private static native void nativeWait(long waitSetHandle, long timeout);
 
-    private static native void nativeWaitSetAddEvent(long waitSetHandle, long eventHandle);
-
     private static native void nativeWaitSetAddSubscriber(long waitSetHandle, long subscriptionHandle);
 
     private static native void nativeWaitSetAddTimer(long waitSetHandle, long timerHandle);
 
     private static native void nativeWaitSetClear(long waitSetHandle);
-
-    private static native boolean nativeWaitSetEventIsReady(long waitSetHandle, long index);
 
     private static native void nativeWaitSetInit(
             long waitSetHandle, long contextHandle, int numberOfSubscriptions,

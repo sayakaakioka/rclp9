@@ -90,6 +90,3 @@ JNIEXPORT void JNICALL Java_rclp9_rcljava_node_NodeImpl_nativeDispose(JNIEnv *, 
     }
 }
 
-JNIEXPORT jstring JNICALL Java_rclp9_rcljava_node_NodeImpl_nativeGetName(JNIEnv * env, jclass, jlong node_handle){
-    return env->NewStringUTF(rcl_node_get_name(reinterpret_cast<rcl_node_t *>(node_handle)));
-}

@@ -7,8 +7,11 @@ import java.util.logging.Logger;
 import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.util.JNIUtils;
 
+/**
+ * This class defines the structure for messages of String.
+ */
 public final class String implements MessageDefinition {
-    private static final Logger logger = Logger.getLogger(String.class.getName());
+    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -16,7 +19,7 @@ public final class String implements MessageDefinition {
 
     static {
         try {
-            JNIUtils.loadImplementation(String.class);
+            JNIUtils.loadImplementation(new Object(){}.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
             logger.severe("Failed to load native library.");
             System.exit(1);
@@ -25,34 +28,57 @@ public final class String implements MessageDefinition {
 
     private java.lang.String data = "";
 
+    /**
+     * Gets the data.
+     * @return data in String
+     */
     public java.lang.String data() {
         return this.data;
     }
 
+    /**
+     * Sets the data.
+     * @param data data to be set
+     */
     public final void data(final java.lang.String data) {
         this.data = data;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final long getFromJavaConverterInstance() {
         return String.getFromJavaConverter();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final long getToJavaConverterInstance() {
         return String.getToJavaConverter();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final long getTypeSupportInstance() {
         return String.getTypeSupport();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final long getDestructorInstance() {
         return String.getDestructor();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final java.lang.String toString() {
         return this.data();

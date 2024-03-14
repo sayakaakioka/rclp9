@@ -63,7 +63,8 @@ class RCLP9Test extends PApplet {
     @Test
     public final void testFunctionalSubscriber() {
         rclp9.createSubscriber(std_msgs.msg.String.class, "test_topic", this::subscriberCallback);
-        // rclp9.spinOnce();
+        // This line will indefinitely pause the test until a message is received from an external source.
+        //rclp9.spinOnce();
     }
 
     private void publisherCallback() {

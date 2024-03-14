@@ -5,11 +5,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Objects;
 
-import rclp9.rcljava.interfaces.Context;
 import rclp9.rcljava.util.JNIUtils;
 
+/**
+ * This class provides an implementation of the Context interface.
+ */
 public final class ContextImpl implements Context {
-    private static final Logger logger = Logger.getLogger(ContextImpl.class.getName());
+    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -17,7 +19,7 @@ public final class ContextImpl implements Context {
 
     static {
         try {
-            JNIUtils.loadImplementation(ContextImpl.class);
+            JNIUtils.loadImplementation(new Object(){}.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
             logger.severe("Failed to load native library.");
             System.exit(1);
@@ -26,10 +28,17 @@ public final class ContextImpl implements Context {
 
     private long handle;
 
+    /**
+     * Instantiates a new context object using the specified handle.
+     * @param handle ROS2 handle of this context
+     */
     public ContextImpl(final long handle) {
         this.handle = Objects.requireNonNull(handle);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void dispose() {
         shutdown();
@@ -37,29 +46,44 @@ public final class ContextImpl implements Context {
         this.handle = 0;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final long handle() {
         return this.handle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void init() {
         nativeInit(this.handle);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final boolean isValid() {
         return nativeIsValid(this.handle);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void shutdown() {
         nativeShutdown(this.handle);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final String toString() {
-        return ("Instance of " + ContextImpl.class.getName() + ", handle = " + handle);
+        return ("Instance of " + (new Object(){}.getClass().getName()) + ", handle = " + handle);
     }
 
     private static native void nativeDispose(long handle);

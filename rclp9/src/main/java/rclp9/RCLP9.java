@@ -19,10 +19,14 @@ import rclp9.rcljava.node.ComposableNode;
 import rclp9.rcljava.node.Node;
 import rclp9.rcljava.publisher.Publisher;
 import rclp9.rcljava.subscriber.Subscriber;
-import rclp9.rcljava.time.WallClockTimer;
+import rclp9.rcljava.time.Timer;
 
+/**
+ * This class acts as a bridge, offering access to RCL 
+ * from Processing the environment.
+ */
 public final class RCLP9 implements ComposableNode {
-    private static final Logger logger = Logger.getLogger(RCLP9.class.getName());
+    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -38,7 +42,7 @@ public final class RCLP9 implements ComposableNode {
 
     private Subscriber<? extends MessageDefinition> subscriber;
 
-    private WallClockTimer wallclockTimer;
+    private Timer timer;
 
     private final String name;
     private final Node node;
@@ -48,6 +52,7 @@ public final class RCLP9 implements ComposableNode {
      * to initialize and start the library.
      *
      * @param p the parent PApplet
+     * @param nodeName the name for this ROS2 node
      */
     public RCLP9(final PApplet p, final String nodeName) {
         this.parent = Objects.requireNonNull(p);
@@ -58,21 +63,44 @@ public final class RCLP9 implements ComposableNode {
         welcome();
     }
 
+    /**
+     * Creates an instance of the publisher.
+     * @param <T>  any class that extends MessageDefinition, or MessageDefinition itself
+     * @param messageType the message type
+     * @param topic the topic name
+     * @return a publisher instance
+     */
     public final <T extends MessageDefinition> Publisher<T> createPublisher(final Class<T> messageType,
             final String topic) {
-        this.publisher = node().createPublisher(messageType, topic);
-        return (Publisher<T>) publisher;
+        var p = node().createPublisher(messageType, topic);
+        this.publisher = p;
+        return p;
     }
 
+    /**
+     * Creates an instance of the subscriber.
+     * @param <T> any class that extends MessageDefinition, or MessageDefinition itself
+     * @param messageType the message type
+     * @param topic the topic name
+     * @param callback the callback function
+     * @return a subscriber instance
+     */
     public final <T extends MessageDefinition> Subscriber<T> createSubscriber(final Class<T> messageType,
             final String topic, Consumer<T> callback) {
-        this.subscriber = node().createSubscriber(messageType, topic, callback);
-        return (Subscriber<T>) subscriber;
+        var s = node().createSubscriber(messageType, topic, callback);
+        this.subscriber = s;
+        return s;
     }
 
-    public final WallClockTimer createWallClockTimer(final long period, final Callback callback) {
-        this.wallclockTimer = node().createWallClockTimer(period, TimeUnit.MILLISECONDS, callback);
-        return wallclockTimer;
+    /**
+     * Creates an instance of the wall clock timer.
+     * @param period the time interval measured in milliseconds
+     * @param callback the callback function
+     * @return a timer instance
+     */
+    public final Timer createWallClockTimer(final long period, final Callback callback) {
+        this.timer = node().createTimer(period, TimeUnit.MILLISECONDS, callback);
+        return timer;
     }
 
     /**
@@ -82,43 +110,77 @@ public final class RCLP9 implements ComposableNode {
         shutdown();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Node node() {
         return node;
     }
 
-    public final void publish(final MessageDefinition message) {
-        publish(Objects.requireNonNull(message), Objects.requireNonNull(publisher));
+    /**
+     * Publishes a message.
+     * @param <T> any class that extends MessageDefinition, or MessageDefinition itself
+     * @param message the message to be dispatched
+     */
+    public final <T extends MessageDefinition> void publish(final T message) {
+        publish(Objects.requireNonNull(message), Objects.requireNonNull((Publisher<T>)publisher));
     }
 
-    public final void publish(final MessageDefinition message, final Publisher<? extends MessageDefinition> publisher) {
+    /**
+     * Publishes a message.
+     * @param <T> any class that extends MessageDefinition, or MessageDefinition itself
+     * @param message the message to be dispatched
+     * @param publisher the publisher to invoke
+     */
+    public final <T extends MessageDefinition> void publish(final T message, final Publisher<T> publisher) {
         Objects.requireNonNull(publisher).publish(Objects.requireNonNull(message));
     }
 
+    /**
+     * Gets the default publisher.
+     * @return the default publisher
+     */
     public final Publisher<? extends MessageDefinition> publisher() {
         return publisher;
     }
 
+    /**
+     * Spins the node forever.
+     */
     public final void spin() {
         RCLJava.spin(this);
     }
 
+    /** 
+     * Spins the node once.
+     */
     public final void spinOnce() {
         RCLJava.spinOnce(this);
     }
 
+    /**
+     * Shuts down the node.
+     */
     public final void shutdown() {
         logger.info("rclp9 is shutting down");
         RCLJava.shutdown();
     }
 
+    /**
+     * Gets the default subsriber.
+     * @return the default subscriber
+     */
     public final Subscriber<? extends MessageDefinition> subscriber() {
         return subscriber;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final String toString() {
-        return ("Instance of " + RCLP9.class.getName() + ", name = " + name + ", handle = "
+        return ("Instance of " + (new Object(){}.getClass().getName()) + ", name = " + name + ", handle = "
                 + node.handle());
     }
 

@@ -10,7 +10,6 @@ import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.publisher.Publisher;
 import rclp9.rcljava.subscriber.Subscriber;
 import rclp9.rcljava.time.Timer;
-import rclp9.rcljava.time.WallClockTimer;
 
 /**
  * This class is comparable with rcl_node_t in ROS2.
@@ -18,65 +17,68 @@ import rclp9.rcljava.time.WallClockTimer;
  */
 public interface Node extends Disposable {
     /**
-     * Create a Publisher.
+     * Creates a Publisher instance.
      *
-     * @param <T>         The type of the messages to be published.
-     * @param messageType The class of the messages to be published.
-     * @param topic       The topic to which the messages will be published.
-     * @return A {@link Publisher}.
+     * @param <T>         the type of the messages to be published
+     * @param messageType the class of the messages to be published
+     * @param topic       the topic to which the messages will be published
+     * @return an instance of the publisher
      */
     <T extends MessageDefinition> Publisher<T> createPublisher(final Class<T> messageType, final String topic);
 
     /**
-     * Create a Subscriber.
+     * Creates a Subscriber instance.
      *
-     * @param <T>         The type of the messages to be subscribed.
-     * @param messageType The class of the messages to be subscribed.
-     * @param topic       The topic where the mssages will be subscribed.
-     * @param callback    The callback function to be called on a message arrival.
-     * @return A {@link Subscriber}
+     * @param <T>         the type of the messages to be subscribed
+     * @param messageType the class of the messages to be subscribed
+     * @param topic       the topic where the messages will be subscribed
+     * @param callback    the callback function to be called upon arrival of a message
+     * @return an instance of the subscriber
      */
     <T extends MessageDefinition> Subscriber<T> createSubscriber(final Class<T> messageType, final String topic,
             final Consumer<T> callback);
 
     /**
-     * Create a WallClockTimer
+     * Creates a Timer instance.
      *
-     * @param period   The time interval.
-     * @param unit     The unit for period.
-     * @param callback The callback function to be called.
-     * @return A {@link WallClockTimer}.
+     * @param period   the time interval
+     * @param unit     the unit for the period
+     * @param callback the callback function that will be called
+     * @return an instance of the timer
      */
-    WallClockTimer createWallClockTimer(final long period, final TimeUnit unit, final Callback callback);
+    Timer createTimer(final long period, final TimeUnit unit, final Callback callback);
 
     /**
-     * @return All the {@link Publisher}s this instance has created.
+     * Returns a list of all publishers created by this instance.
+     * @return list of publishers
      */
     Collection<Publisher<? extends MessageDefinition>> publishers();
 
     /**
-     * @return All the {@link Subscriber}s this instance has created.
+     * Returns a list of all subscribers created by this instance.
+     * @return list of subscribers
      */
     Collection<Subscriber<? extends MessageDefinition>> subscribers();
 
     /**
-     * @return All the {@link Timer}s this instance has created.
+     * Returns a list of all timers created by this instance.
+     * @return list of timers
      */
     Collection<Timer> timers();
 
     /**
-     * Remove a Publisher.
-     *
-     * @param publisher The object to be removed.
-     * @return true if the Publisher was successfully removed.
+     * Removes a Publisher instance.
+     * @param <T> the type of the messages to be published
+     * @param publisher the publisher instance to be removed
+     * @return true if the instance was successfully removed, and false otherwise
      */
     <T extends MessageDefinition> boolean removePublisher(final Publisher<T> publisher);
 
     /**
-     * Remove a Subscriber.
-     *
-     * @param subscriber The object to be removed.
-     * @return true if the Subscriber was successfully removed.
+     * Removes a Subscriber instance.
+     * @param <T> the type of the messages to be subscribed
+     * @param subscriber the subscriber instance to be removed
+     * @return true if the instance was successfully removed, and false otherwise
      */
     <T extends MessageDefinition> boolean removeSubscriber(final Subscriber<T> subscriber);
 

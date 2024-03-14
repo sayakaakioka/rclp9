@@ -12,8 +12,8 @@ import java.util.logging.Logger;
 import java.util.Objects;
 
 import rclp9.rcljava.RCLJava;
+import rclp9.rcljava.context.Context;
 import rclp9.rcljava.interfaces.Callback;
-import rclp9.rcljava.interfaces.Context;
 import rclp9.rcljava.interfaces.Disposable;
 import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.publisher.Publisher;
@@ -22,12 +22,14 @@ import rclp9.rcljava.subscriber.Subscriber;
 import rclp9.rcljava.subscriber.SubscriberImpl;
 import rclp9.rcljava.time.Clock;
 import rclp9.rcljava.time.Timer;
-import rclp9.rcljava.time.WallClockTimer;
-import rclp9.rcljava.time.WallClockTimerImpl;
+import rclp9.rcljava.time.TimerImpl;
 import rclp9.rcljava.util.JNIUtils;
 
+/**
+ * This class provides an implementation of the Node interface.
+ */
 public final class NodeImpl implements Node {
-    private static final Logger logger = Logger.getLogger(NodeImpl.class.getName());
+    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -35,7 +37,7 @@ public final class NodeImpl implements Node {
 
     static {
         try {
-            JNIUtils.loadImplementation(NodeImpl.class);
+            JNIUtils.loadImplementation(new Object(){}.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
             logger.severe("Failed to load native library.");
             System.exit(1);
@@ -45,10 +47,16 @@ public final class NodeImpl implements Node {
     private long handle;
     private final Context context;
     private final Clock clock;
+    // TODO: Consider that the message type may be a mix of different types.
     private final Collection<Publisher<? extends MessageDefinition>> publishers;
     private final Collection<Subscriber<? extends MessageDefinition>> subscribers;
     private final Collection<Timer> timers;
 
+    /**
+     * Instantiates a new node object.
+     * @param handle the ROS2 handle associated with this node
+     * @param context the ROS2 context associated with this node
+     */
     public NodeImpl(final long handle, final Context context) {
         this.handle = Objects.requireNonNull(handle);
         this.context = Objects.requireNonNull(context);
@@ -58,6 +66,9 @@ public final class NodeImpl implements Node {
         this.timers = new LinkedBlockingQueue<>();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final <T extends MessageDefinition> Publisher<T> createPublisher(final Class<T> messageType,
             final String topic) {
@@ -70,6 +81,9 @@ public final class NodeImpl implements Node {
         return publisher;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final <T extends MessageDefinition> Subscriber<T> createSubscriber(final Class<T> messageType,
             final String topic, final Consumer<T> callback) {
@@ -83,15 +97,21 @@ public final class NodeImpl implements Node {
         return subscriber;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public final WallClockTimer createWallClockTimer(final long period, final TimeUnit unit, final Callback callback) {
+    public final Timer createTimer(final long period, final TimeUnit unit, final Callback callback) {
         var timerPeriodNS = TimeUnit.NANOSECONDS.convert(period, unit);
         var timerHandle = nativeCreateTimerHandle(clock.handle(), context.handle(), timerPeriodNS);
-        var timer = new WallClockTimerImpl(new WeakReference<Node>(this), timerHandle, callback, timerPeriodNS);
+        var timer = new TimerImpl(new WeakReference<Node>(this), timerHandle, callback, timerPeriodNS);
         this.timers.add(timer);
         return timer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final void dispose() {
         cleanup();
@@ -99,39 +119,60 @@ public final class NodeImpl implements Node {
         this.handle = 0;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final long handle() {
         return this.handle;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final Collection<Publisher<? extends MessageDefinition>> publishers() {
         return this.publishers;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final Collection<Subscriber<? extends MessageDefinition>> subscribers() {
         return this.subscribers;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final Collection<Timer> timers() {
         return this.timers;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final <T extends MessageDefinition> boolean removePublisher(final Publisher<T> publisher) {
         return this.publishers.remove(publisher);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final <T extends MessageDefinition> boolean removeSubscriber(final Subscriber<T> subscriber) {
         return this.subscribers.remove(subscriber);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final String toString() {
-        return ("Instance of " + NodeImpl.class.getName() + ", handle = " + handle);
+        return ("Instance of " + (new Object(){}.getClass().getName()) + ", handle = " + handle);
     }
 
     private void cleanup() {

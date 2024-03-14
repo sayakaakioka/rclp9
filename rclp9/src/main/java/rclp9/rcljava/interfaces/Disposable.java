@@ -1,22 +1,24 @@
 package rclp9.rcljava.interfaces;
 
+/**
+ * This interface defines the APIs for the underlying ROS2 structure.
+ */
 public interface Disposable {
     /**
-     * Destroy the underlying ROS2 structure
+     * Destroys the underlying structure.
      */
     void dispose();
 
     /**
-     * Get a handle in ROS2 structure.
-     *
-     * @return A pointer to the underlying ROS2 structure
+     * Gets a handle in ROS2 structure.
+     * @return ID in ROS2 structure
      */
     long handle();
 
     /**
-     * Return the information of this object.
-     *
-     * @return Object information in String.
+     * Returns a string containing the information of this object. 
+     * The details should be determined in the interfaces inherited this interface.
+     * @return string representation of this object
      */
     String toString();
 }
