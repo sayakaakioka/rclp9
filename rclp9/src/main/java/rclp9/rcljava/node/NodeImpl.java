@@ -47,7 +47,7 @@ public final class NodeImpl implements Node {
     private long handle;
     private final Context context;
     private final Clock clock;
-    // TODO: Consider that the message type may be a mix of different types.
+    // TODO: Consider that the message type may be a mix of several types.
     private final Collection<Publisher<? extends MessageDefinition>> publishers;
     private final Collection<Subscriber<? extends MessageDefinition>> subscribers;
     private final Collection<Timer> timers;

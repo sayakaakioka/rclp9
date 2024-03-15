@@ -2,6 +2,7 @@ package rclp9.rcljava.executor;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,9 +38,9 @@ public final class SingleThreadedExecutor implements Executor {
     }
 
     private final List<ComposableNode> nodes = new ArrayList<>();
-    private final List<Map.Entry<Long, Timer>> timerHandlers = new ArrayList<>();
-    private final List<Map.Entry<Long, Subscriber<? extends MessageDefinition>>> subscriberHandlers = new ArrayList<>();
-    private boolean executed = false;
+    private final List<Map.Entry<Long, Timer>> timerHandles = new ArrayList<>();
+    // TODO: Consider that the message type may be a mix of several types.
+    private final List<Map.Entry<Long, Subscriber<? extends MessageDefinition>>> subscriberHandles = new ArrayList<>();
 
     /**
      * Constructor performs no operations.
@@ -92,29 +93,28 @@ public final class SingleThreadedExecutor implements Executor {
     }
 
     private boolean executeExecutables() {
-        executed = false;
+        boolean executed = false;
 
-        for (var entry : this.timerHandlers) {
-            final Optional<Timer> timer = Optional.ofNullable(entry.getValue());
-            timer.ifPresent((t) -> {
-                if(t.isReady()){
-                    entry.setValue(null);
-                    
-                    t.callTimer();
-                    t.executeCallback();
-                    this.timerHandlers.remove(new AbstractMap.SimpleEntry<Long, Timer>(t.handle(), t));
-                    executed = true;
-                }
-            });
+        Iterator<Map.Entry<Long, Timer>> timerItr = this.timerHandles.iterator();
+        while(timerItr.hasNext()) {
+            final Optional<Timer> timer = Optional.ofNullable(timerItr.next().getValue());
+            if(timer.isPresent() && timer.get().isReady()){
+                var t = timer.get();
+                t.callTimer();
+                t.executeCallback();
+                timerItr.remove();
+                executed = true;
+            }
         }
 
-        for (var entry : this.subscriberHandlers) {
-            Optional<Subscriber<? extends MessageDefinition>> subscriber = Optional.ofNullable(entry.getValue());
-            subscriber.ifPresent((s) -> {
-                entry.setValue(null);
-                executeSubscriberCallback(s);
+        Iterator<Map.Entry<Long, Subscriber<? extends MessageDefinition>>> subscriberItr = this.subscriberHandles.iterator();
+        while(subscriberItr.hasNext()){
+            Optional<Subscriber<? extends MessageDefinition>> subscriber = Optional.ofNullable(subscriberItr.next().getValue());
+            if(subscriber.isPresent()){
+                executeSubscriberCallback(subscriber.get());
+                subscriberItr.remove();
                 executed = true;
-            });
+            }
         }
         return executed;
     }
@@ -124,31 +124,27 @@ public final class SingleThreadedExecutor implements Executor {
         message.ifPresent((m) -> {
             subscriber.executeCallback(m);
         });
-        this.subscriberHandlers.remove(new AbstractMap.SimpleEntry<Long, Subscriber<T>>(subscriber.handle(), subscriber));
+        //this.subscriberHandles.remove(new AbstractMap.SimpleEntry<Long, Subscriber<T>>(subscriber.handle(), subscriber));
     }
 
     private void waitForWork(final long timeout) {
-        this.timerHandlers.clear();
-        this.subscriberHandlers.clear();
-
-        for (var composableNode : this.nodes) {
-            for (var subscriber : composableNode.node().subscribers()) {
-                this.subscriberHandlers
-                        .add(new AbstractMap.SimpleEntry<Long, Subscriber<? extends MessageDefinition>>(
-                                subscriber.handle(), subscriber));
-            }
-
-            for (var timer : composableNode.node().timers()) {
-                this.timerHandlers.add(new AbstractMap.SimpleEntry<Long, Timer>(timer.handle(), timer));
-            }
-        }
+        this.timerHandles.clear();
+        this.subscriberHandles.clear();
 
         int subscribersSize = 0;
         int timersSize = 0;
-
         for (var composableNode : this.nodes) {
-            subscribersSize += composableNode.node().subscribers().size();
-            timersSize += composableNode.node().timers().size();
+            for (var subscriber : composableNode.node().subscribers()) {
+                this.subscriberHandles
+                        .add(new AbstractMap.SimpleEntry<Long, Subscriber<? extends MessageDefinition>>(
+                                subscriber.handle(), subscriber));
+                subscribersSize++;
+            }
+
+            for (var timer : composableNode.node().timers()) {
+                this.timerHandles.add(new AbstractMap.SimpleEntry<Long, Timer>(timer.handle(), timer));
+                timersSize++;
+            }
         }
 
         if (subscribersSize == 0 && timersSize == 0) {
@@ -161,43 +157,43 @@ public final class SingleThreadedExecutor implements Executor {
                 0);
         nativeWaitSetClear(waitSetHandle);
 
-        for (var entry : this.subscriberHandlers) {
+        for (var entry : this.subscriberHandles) {
             nativeWaitSetAddSubscriber(waitSetHandle, entry.getKey());
         }
 
-        for (var entry : this.timerHandlers) {
+        for (var entry : this.timerHandles) {
             nativeWaitSetAddTimer(waitSetHandle, entry.getKey());
         }
 
         nativeWait(waitSetHandle, timeout);
 
-        for (int i = 0; i < this.subscriberHandlers.size(); ++i) {
+        for (int i = 0; i < this.subscriberHandles.size(); ++i) {
             if (!nativeWaitSetSubscriberIsReady(waitSetHandle, i)) {
-                this.subscriberHandlers.get(i).setValue(null);
+                this.subscriberHandles.get(i).setValue(null);
             }
         }
 
-        for (int i = 0; i < this.timerHandlers.size(); ++i) {
+        for (int i = 0; i < this.timerHandles.size(); ++i) {
             if (!nativeWaitSetTimerIsReady(waitSetHandle, i)) {
-                this.timerHandlers.get(i).setValue(null);
+                this.timerHandles.get(i).setValue(null);
             }
         }
 
-        var subscriberIterator = this.subscriberHandlers.iterator();
-        while (subscriberIterator.hasNext()) {
-            var entry = subscriberIterator.next();
+        var subscriberItr = this.subscriberHandles.iterator();
+        while (subscriberItr.hasNext()) {
+            var entry = subscriberItr.next();
             Optional<Subscriber<? extends MessageDefinition>> subscriber = Optional.ofNullable(entry.getValue());
             if (subscriber.isEmpty()) {
-                subscriberIterator.remove();
+                subscriberItr.remove();
             }
         }
 
-        var timerIterator = this.timerHandlers.iterator();
-        while (timerIterator.hasNext()) {
-            var entry = timerIterator.next();
+        var timerItr = this.timerHandles.iterator();
+        while (timerItr.hasNext()) {
+            var entry = timerItr.next();
             Optional<Timer> timer = Optional.ofNullable(entry.getValue());
             if (timer.isEmpty()) {
-                timerIterator.remove();
+                timerItr.remove();
             }
         }
 

@@ -32,6 +32,9 @@ dependencies {
 
     // Processing core libraries
     implementation(files("libs/core.jar"))
+
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    implementation("org.apache.commons:commons-lang3:3.14.0")
 }
 
 java{

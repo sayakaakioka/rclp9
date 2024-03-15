@@ -1,1 +1,0 @@
-wstring my_string

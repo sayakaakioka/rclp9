@@ -11,9 +11,9 @@ import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.util.JNIUtils;
 
 /**
- * This class defines the structure for messages of String.
+ * This class defines the structure for messages of Float64.
  */
-public final class String implements MessageDefinition {
+public class Float64 implements MessageDefinition{
     private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -29,13 +29,13 @@ public final class String implements MessageDefinition {
         }
     }
 
-    private java.lang.String data = "";
+    private double data;
 
     /**
      * Gets the value of data.
-     * @return data in String
+     * @return data in double
      */
-    public java.lang.String data() {
+    public double data() {
         return this.data;
     }
 
@@ -43,7 +43,7 @@ public final class String implements MessageDefinition {
      * Sets the value of data.
      * @param data value to be set
      */
-    public final void data(final java.lang.String data) {
+    public final void data(final double data) {
         this.data = data;
     }
 
@@ -60,7 +60,7 @@ public final class String implements MessageDefinition {
      */
     @Override
     public boolean equals(final Object obj){
-        if(!(obj instanceof String)){
+        if(!(obj instanceof Float64)){
             return false;
         }
 
@@ -68,8 +68,8 @@ public final class String implements MessageDefinition {
             return true;
         }
 
-        String s = (String)obj;
-        return new EqualsBuilder().append(data, s.data).isEquals();
+        Float64 f = (Float64)obj;
+        return new EqualsBuilder().append(data, f.data).isEquals();
     }
 
     /**
@@ -77,7 +77,7 @@ public final class String implements MessageDefinition {
      */
     @Override
     public final long getFromJavaConverterInstance() {
-        return String.getFromJavaConverter();
+        return Float64.getFromJavaConverter();
     }
 
     /**
@@ -85,7 +85,7 @@ public final class String implements MessageDefinition {
      */
     @Override
     public final long getToJavaConverterInstance() {
-        return String.getToJavaConverter();
+        return Float64.getToJavaConverter();
     }
 
     /**
@@ -93,7 +93,7 @@ public final class String implements MessageDefinition {
      */
     @Override
     public final long getTypeSupportInstance() {
-        return String.getTypeSupport();
+        return Float64.getTypeSupport();
     }
 
     /**
@@ -101,7 +101,7 @@ public final class String implements MessageDefinition {
      */
     @Override
     public final long getDestructorInstance() {
-        return String.getDestructor();
+        return Float64.getDestructor();
     }
 
     /**
@@ -109,7 +109,7 @@ public final class String implements MessageDefinition {
      */
     @Override
     public final java.lang.String toString() {
-        return this.data();
+        return Double.toString(data);
     }
 
     private static native final long getDestructor();
@@ -119,5 +119,5 @@ public final class String implements MessageDefinition {
     private static native final long getToJavaConverter();
 
     private static native final long getTypeSupport();
-
+    
 }

@@ -1,1 +1,0 @@
-bool my_bool

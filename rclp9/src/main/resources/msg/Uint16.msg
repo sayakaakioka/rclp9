@@ -1,1 +1,0 @@
-uint16 my_int

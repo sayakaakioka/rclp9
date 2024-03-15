@@ -96,7 +96,6 @@ JNIEXPORT jlong JNICALL Java_std_1msgs_msg_String_getToJavaConverter(JNIEnv *, j
 }
 
 JNIEXPORT jlong JNICALL Java_std_1msgs_msg_String_getTypeSupport(JNIEnv *, jclass){
-    jlong ptr = reinterpret_cast<jlong>(ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String));
-    return ptr;
+    return reinterpret_cast<jlong>(ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String));
 }
 

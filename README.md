@@ -4,7 +4,10 @@
 
 ROS2 minimal client library for Processing. Currently, a minimal publisher,
 a minimal subscriber, timer, and callback are available.
-The message type supported is limited to String.
+The message types supported by the current version include:
+`std_msgs.msg.Float64`, `std_msgs.msg.String`,
+`geometry_msgs.msg.Point`, `geometry_msgs.msg.Pose`,
+and `geometry_msgs.msg.Quaternion`.
 Other functionalities are under development.
 Please note that only linux on x86 / arm is supported at this time.
 

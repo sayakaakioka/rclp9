@@ -25,6 +25,7 @@ def main():
     ros_include = "{}/include".format(ros);
     if ros_dist == "iron":
         module_include = ["builtin_interfaces",
+                          "geometry_msgs",
                           "rcl",
                           "rcl_yaml_param_parser",
                           "rcutils",
@@ -37,7 +38,8 @@ def main():
                           "type_description_interfaces"
                           ]
     else:
-        module_include = [ "rcl",
+        module_include = ["geometry_msgs",
+                          "rcl",
                           "rcl_yaml_param_parser",
                           "rcutils",
                           "rmw",
@@ -83,6 +85,10 @@ def main():
                       "builtin_interfaces__rosidl_typesupport_introspection_c",
                       "fastcdr",
                       "fastrtps",
+                      "geometry_msgs__rosidl_generator_c",
+                      "geometry_msgs__rosidl_typesupport_c",
+                      "geometry_msgs__rosidl_typesupport_fastrtps_c",
+                      "geometry_msgs__rosidl_typesupport_introspection_c",
                       "rcl",
                       "rcl_interfaces__rosidl_generator_c",
                       "rcl_interfaces__rosidl_typesupport_c",
@@ -125,6 +131,10 @@ def main():
                       "builtin_interfaces__rosidl_typesupport_introspection_c",
                       "fastcdr",
                       "fastrtps",
+                      "geometry_msgs__rosidl_generator_c",
+                      "geometry_msgs__rosidl_typesupport_c",
+                      "geometry_msgs__rosidl_typesupport_fastrtps_c",
+                      "geometry_msgs__rosidl_typesupport_introspection_c",
                       "rcl",
                       "rcl_interfaces__rosidl_generator_c",
                       "rcl_interfaces__rosidl_typesupport_c",
