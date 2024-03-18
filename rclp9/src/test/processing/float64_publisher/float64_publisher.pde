@@ -11,7 +11,7 @@ void setup() {
 
 void timerCallback() {
   std_msgs.msg.Float64 message = new std_msgs.msg.Float64();
-  message.data((double)this.counter/100000000);
+  message.data = (double)this.counter/100000000;
   this.counter++;
   System.out.println("Publishing: [" + message + "]");
   rclp9.publish(message);

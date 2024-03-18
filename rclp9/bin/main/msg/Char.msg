@@ -1,1 +1,0 @@
-char my_char

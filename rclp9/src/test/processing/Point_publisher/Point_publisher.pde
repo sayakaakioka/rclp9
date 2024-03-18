@@ -12,7 +12,9 @@ void setup() {
 void timerCallback() {
   geometry_msgs.msg.Point message = new geometry_msgs.msg.Point();
   double val = (double)this.counter/100000000;
-  message.point(val, 2.0*val, 4.0*val);
+  message.x = val;
+  message.y = 2.0*val;
+  message.z = 4.0*val;
   this.counter++;
   System.out.println("Publishing: [" + message + "]");
   rclp9.publish(message);

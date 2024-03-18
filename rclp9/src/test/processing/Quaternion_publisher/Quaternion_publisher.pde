@@ -12,7 +12,10 @@ void setup() {
 void timerCallback() {
   geometry_msgs.msg.Quaternion message = new geometry_msgs.msg.Quaternion();
   double val = (double)this.counter/100000000;
-  message.quaternion(val, 2.0*val, 4.0*val, 8.0*val);
+  message.x = val;
+  message.y = 2.0*val;
+  message.z = 4.0*val;
+  message.w = 8.0*val;
   this.counter++;
   System.out.println("Publishing: [" + message + "]");
   rclp9.publish(message);

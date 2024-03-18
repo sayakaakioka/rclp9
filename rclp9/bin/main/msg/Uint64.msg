@@ -1,1 +1,0 @@
-uint64 my_int

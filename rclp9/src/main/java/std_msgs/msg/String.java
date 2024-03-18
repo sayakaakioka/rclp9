@@ -14,7 +14,8 @@ import rclp9.rcljava.util.JNIUtils;
  * This class defines the structure for messages of String.
  */
 public final class String implements MessageDefinition {
-    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
+    private static final Logger logger = Logger.getLogger(new Object() {
+    }.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -22,36 +23,21 @@ public final class String implements MessageDefinition {
 
     static {
         try {
-            JNIUtils.loadImplementation(new Object(){}.getClass().getEnclosingClass());
+            JNIUtils.loadImplementation(new Object() {
+            }.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
             logger.severe("Failed to load native library.");
             System.exit(1);
         }
     }
 
-    private java.lang.String data = "";
-
-    /**
-     * Gets the value of data.
-     * @return data in String
-     */
-    public java.lang.String data() {
-        return this.data;
-    }
-
-    /**
-     * Sets the value of data.
-     * @param data value to be set
-     */
-    public final void data(final java.lang.String data) {
-        this.data = data;
-    }
+    public java.lang.String data = "";
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int hashCode(){
+    public int hashCode() {
         return new HashCodeBuilder().append(data).toHashCode();
     }
 
@@ -59,16 +45,16 @@ public final class String implements MessageDefinition {
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(final Object obj){
-        if(!(obj instanceof String)){
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof String)) {
             return false;
         }
 
-        if(this == obj){
+        if (this == obj) {
             return true;
         }
 
-        String s = (String)obj;
+        String s = (String) obj;
         return new EqualsBuilder().append(data, s.data).isEquals();
     }
 
@@ -109,7 +95,7 @@ public final class String implements MessageDefinition {
      */
     @Override
     public final java.lang.String toString() {
-        return this.data();
+        return this.data;
     }
 
     private static native final long getDestructor();

@@ -1,1 +1,0 @@
-byte my_byte

@@ -13,8 +13,9 @@ import rclp9.rcljava.util.JNIUtils;
 /**
  * This class defines the structure for messages of Float64.
  */
-public class Float64 implements MessageDefinition{
-    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
+public class Float64 implements MessageDefinition {
+    private static final Logger logger = Logger.getLogger(new Object() {
+    }.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -22,36 +23,21 @@ public class Float64 implements MessageDefinition{
 
     static {
         try {
-            JNIUtils.loadImplementation(new Object(){}.getClass().getEnclosingClass());
+            JNIUtils.loadImplementation(new Object() {
+            }.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
             logger.severe("Failed to load native library.");
             System.exit(1);
         }
     }
 
-    private double data;
-
-    /**
-     * Gets the value of data.
-     * @return data in double
-     */
-    public double data() {
-        return this.data;
-    }
-
-    /**
-     * Sets the value of data.
-     * @param data value to be set
-     */
-    public final void data(final double data) {
-        this.data = data;
-    }
+    public double data;
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int hashCode(){
+    public int hashCode() {
         return new HashCodeBuilder().append(data).toHashCode();
     }
 
@@ -59,16 +45,16 @@ public class Float64 implements MessageDefinition{
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(final Object obj){
-        if(!(obj instanceof Float64)){
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof Float64)) {
             return false;
         }
 
-        if(this == obj){
+        if (this == obj) {
             return true;
         }
 
-        Float64 f = (Float64)obj;
+        Float64 f = (Float64) obj;
         return new EqualsBuilder().append(data, f.data).isEquals();
     }
 
@@ -119,5 +105,5 @@ public class Float64 implements MessageDefinition{
     private static native final long getToJavaConverter();
 
     private static native final long getTypeSupport();
-    
+
 }

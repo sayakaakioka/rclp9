@@ -12,7 +12,13 @@ void setup() {
 void timerCallback() {
   geometry_msgs.msg.Pose message = new geometry_msgs.msg.Pose();
   double val = (double)this.counter/100000000;
-  message.pose(val, 2.0*val, 4.0*val, 8.0*val, 16.0*val, 32.0*val, 64.0*val);
+  message.position.x = val;
+  message.position.y = 2.0*val;
+  message.position.z = 4.0*val;
+  message.orientation.x = 8.0*val;
+  message.orientation.y = 16.0*val;
+  message.orientation.z = 32.0*val;
+  message.orientation.w = 64.0*val;
   this.counter++;
   System.out.println("Publishing: [" + message + "]");
   rclp9.publish(message);

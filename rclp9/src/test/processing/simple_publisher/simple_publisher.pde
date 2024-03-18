@@ -11,9 +11,9 @@ void setup() {
 
 void timerCallback() {
   std_msgs.msg.String message = new std_msgs.msg.String();
-  message.data("Hello, world! " + this.counter);
+  message.data = "Hello, world! " + this.counter;
   this.counter++;
-  System.out.println("Publishing: [" + message.data() + "]");
+  System.out.println("Publishing: [" + message.data + "]");
   rclp9.publish(message);
 }
 
