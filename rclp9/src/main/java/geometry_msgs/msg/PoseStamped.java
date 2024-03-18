@@ -11,9 +11,9 @@ import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.util.JNIUtils;
 
 /**
- * This class defines the structure for messages of Quaternion.
+ * This class defines the structure for messages of PoseStamped.
  */
-public class Quaternion implements MessageDefinition {
+public class PoseStamped implements MessageDefinition {
     private static final Logger logger = Logger.getLogger(new Object() {}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -31,31 +31,21 @@ public class Quaternion implements MessageDefinition {
     }
 
     /**
-     * x in its raw
+     * header in its raw
      */
-    public double x;
+    public std_msgs.msg.Header header = new std_msgs.msg.Header();
 
     /**
-     * y in its raw
+     * pose in its raw
      */
-    public double y;
-
-    /**
-     * z in its raw
-     */
-    public double z;
-
-    /**
-     * w in its raw
-     */
-    public double w;
+    public geometry_msgs.msg.Pose pose = new geometry_msgs.msg.Pose();
 
     /**
      * {@inheritDoc}
      */
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(x).append(y).append(z).append(w).toHashCode();
+        return new HashCodeBuilder().append(header).append(pose).toHashCode();
     }
 
     /**
@@ -63,7 +53,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public boolean equals(final Object obj) {
-        if (!(obj instanceof Quaternion)) {
+        if (!(obj instanceof PoseStamped)) {
             return false;
         }
 
@@ -71,8 +61,8 @@ public class Quaternion implements MessageDefinition {
             return true;
         }
 
-        Quaternion q = (Quaternion) obj;
-        return new EqualsBuilder().append(x, q.x).append(y, q.y).append(z, q.z).append(w, q.w).isEquals();
+        PoseStamped p = (PoseStamped) obj;
+        return new EqualsBuilder().append(header, p.header).append(pose, p.pose).isEquals();
     }
 
     /**
@@ -80,7 +70,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getFromJavaConverterInstance() {
-        return Quaternion.getFromJavaConverter();
+        return PoseStamped.getFromJavaConverter();
     }
 
     /**
@@ -88,7 +78,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getToJavaConverterInstance() {
-        return Quaternion.getToJavaConverter();
+        return PoseStamped.getToJavaConverter();
     }
 
     /**
@@ -96,7 +86,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getTypeSupportInstance() {
-        return Quaternion.getTypeSupport();
+        return PoseStamped.getTypeSupport();
     }
 
     /**
@@ -104,7 +94,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getDestructorInstance() {
-        return Quaternion.getDestructor();
+        return PoseStamped.getDestructor();
     }
 
     /**
@@ -112,7 +102,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final java.lang.String toString() {
-        return "(" + x + ", " + y + ", " + z + ", " + w + ")";
+        return "header = " + header + ", pose = " + pose;
     }
 
     private static native final long getDestructor();

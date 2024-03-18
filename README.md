@@ -5,9 +5,16 @@
 ROS2 minimal client library for Processing. Currently, a minimal publisher,
 a minimal subscriber, timer, and callback are available.
 The message types supported by the current version include:
-`std_msgs.msg.Float64`, `std_msgs.msg.String`,
-`geometry_msgs.msg.Point`, `geometry_msgs.msg.Pose`,
+`builtin_interfaces.msg.Time`,
+`std_msgs.msg.Float64`,
+`std_msgs.msg.Header`,
+`std_msgs.msg.String`,
+`geometry_msgs.msg.Point`,
+`geometry_msgs.msg.Pose`,
+`geometry_msgs.msg.PoseStamped`,
 and `geometry_msgs.msg.Quaternion`.
+Examples can be found [here](https://github.com/sayakaakioka/rclp9/tree/main/rclp9/src/test/processing).
+
 Other functionalities are under development.
 Please note that only linux on x86 / arm is supported at this time.
 

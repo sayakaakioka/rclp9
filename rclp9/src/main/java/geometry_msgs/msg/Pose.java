@@ -11,11 +11,10 @@ import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.util.JNIUtils;
 
 /**
- * This class defines the structure for messages of Point.
+ * This class defines the structure for messages of Pose.
  */
 public class Pose implements MessageDefinition {
-    private static final Logger logger = Logger.getLogger(new Object() {
-    }.getClass().getName());
+    private static final Logger logger = Logger.getLogger(new Object() {}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -31,7 +30,14 @@ public class Pose implements MessageDefinition {
         }
     }
 
+    /**
+     * position in its raw
+     */
     public Point position = new Point();
+
+    /**
+     * orientation in its raw
+     */
     public Quaternion orientation = new Quaternion();
 
     /**

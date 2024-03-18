@@ -14,8 +14,7 @@ import rclp9.rcljava.util.JNIUtils;
  * This class defines the structure for messages of Point.
  */
 public class Point implements MessageDefinition {
-    private static final Logger logger = Logger.getLogger(new Object() {
-    }.getClass().getName());
+    private static final Logger logger = Logger.getLogger(new Object() {}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -31,8 +30,19 @@ public class Point implements MessageDefinition {
         }
     }
 
+    /**
+     * x value in its raw
+     */
     public double x;
+
+    /**
+     * y value in its raw
+     */
     public double y;
+
+    /**
+     * z value in its raw
+     */
     public double z;
 
     /**

@@ -1,4 +1,4 @@
-package geometry_msgs.msg;
+package std_msgs.msg;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -11,9 +11,9 @@ import rclp9.rcljava.interfaces.MessageDefinition;
 import rclp9.rcljava.util.JNIUtils;
 
 /**
- * This class defines the structure for messages of Quaternion.
+ * This class defines the structure for messages of Header.
  */
-public class Quaternion implements MessageDefinition {
+public class Header implements MessageDefinition {
     private static final Logger logger = Logger.getLogger(new Object() {}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
@@ -31,31 +31,21 @@ public class Quaternion implements MessageDefinition {
     }
 
     /**
-     * x in its raw
+     * time stamp in its raw
      */
-    public double x;
+    public builtin_interfaces.msg.Time stamp = new builtin_interfaces.msg.Time();
 
     /**
-     * y in its raw
+     * frame_id in its raw
      */
-    public double y;
-
-    /**
-     * z in its raw
-     */
-    public double z;
-
-    /**
-     * w in its raw
-     */
-    public double w;
+    public java.lang.String frame_id = "";
 
     /**
      * {@inheritDoc}
      */
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(x).append(y).append(z).append(w).toHashCode();
+        return new HashCodeBuilder().append(stamp).append(frame_id).toHashCode();
     }
 
     /**
@@ -63,7 +53,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public boolean equals(final Object obj) {
-        if (!(obj instanceof Quaternion)) {
+        if (!(obj instanceof Header)) {
             return false;
         }
 
@@ -71,8 +61,8 @@ public class Quaternion implements MessageDefinition {
             return true;
         }
 
-        Quaternion q = (Quaternion) obj;
-        return new EqualsBuilder().append(x, q.x).append(y, q.y).append(z, q.z).append(w, q.w).isEquals();
+        Header h = (Header) obj;
+        return new EqualsBuilder().append(stamp, h.stamp).append(frame_id, h.frame_id).isEquals();
     }
 
     /**
@@ -80,7 +70,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getFromJavaConverterInstance() {
-        return Quaternion.getFromJavaConverter();
+        return Header.getFromJavaConverter();
     }
 
     /**
@@ -88,7 +78,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getToJavaConverterInstance() {
-        return Quaternion.getToJavaConverter();
+        return Header.getToJavaConverter();
     }
 
     /**
@@ -96,7 +86,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getTypeSupportInstance() {
-        return Quaternion.getTypeSupport();
+        return Header.getTypeSupport();
     }
 
     /**
@@ -104,7 +94,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final long getDestructorInstance() {
-        return Quaternion.getDestructor();
+        return Header.getDestructor();
     }
 
     /**
@@ -112,7 +102,7 @@ public class Quaternion implements MessageDefinition {
      */
     @Override
     public final java.lang.String toString() {
-        return "(" + x + ", " + y + ", " + z + ", " + w + ")";
+        return "(" + frame_id + ", " + stamp + ")";
     }
 
     private static native final long getDestructor();
@@ -124,3 +114,4 @@ public class Quaternion implements MessageDefinition {
     private static native final long getTypeSupport();
 
 }
+

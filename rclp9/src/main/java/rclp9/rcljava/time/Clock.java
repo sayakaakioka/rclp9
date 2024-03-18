@@ -1,5 +1,6 @@
 package rclp9.rcljava.time;
 
+import java.util.concurrent.TimeUnit;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,8 +54,22 @@ public final class Clock implements Disposable {
         return this.handle;
     }
 
+    /**
+     * Gets current time in builtin_interfaces.msg.Time.
+     * @return current time
+     */
+    public builtin_interfaces.msg.Time now(){
+        long rclTime = nativeRCLSystemTimeNow();
+        builtin_interfaces.msg.Time msgTime = new builtin_interfaces.msg.Time();
+        msgTime.sec = ((int) TimeUnit.SECONDS.convert(rclTime, TimeUnit.NANOSECONDS));
+        msgTime.nanosec = ((int) rclTime % (1000 * 1000 * 1000));
+        return msgTime;
+    }
+
     private static native long nativeCreateClockHandle();
 
     private static native void nativeDispose(long handle);
+
+    private static native long nativeRCLSystemTimeNow();
 
 }

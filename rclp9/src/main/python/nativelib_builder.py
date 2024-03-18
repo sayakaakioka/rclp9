@@ -38,7 +38,8 @@ def main():
                           "type_description_interfaces"
                           ]
     else:
-        module_include = ["geometry_msgs",
+        module_include = ["builtin_interfaces",
+                          "geometry_msgs",
                           "rcl",
                           "rcl_yaml_param_parser",
                           "rcutils",
@@ -81,6 +82,7 @@ def main():
     if ros_dist == "iron":
         module_lib = ["ament_index_cpp",
                       "builtin_interfaces__rosidl_generator_c",
+                      "builtin_interfaces__rosidl_typesupport_c",
                       "builtin_interfaces__rosidl_typesupport_fastrtps_c",
                       "builtin_interfaces__rosidl_typesupport_introspection_c",
                       "fastcdr",
@@ -127,6 +129,7 @@ def main():
     else:
         module_lib = ["ament_index_cpp",
                       "builtin_interfaces__rosidl_generator_c",
+                      "builtin_interfaces__rosidl_typesupport_c",
                       "builtin_interfaces__rosidl_typesupport_fastrtps_c",
                       "builtin_interfaces__rosidl_typesupport_introspection_c",
                       "fastcdr",

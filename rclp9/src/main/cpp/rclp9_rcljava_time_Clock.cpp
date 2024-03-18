@@ -34,3 +34,16 @@ JNIEXPORT void JNICALL Java_rclp9_rcljava_time_Clock_nativeDispose(JNIEnv *, jcl
         // TODO: throw an exception
     }
 }
+
+JNIEXPORT jlong JNICALL Java_rclp9_rcljava_time_Clock_nativeRCLSystemTimeNow(JNIEnv *, jclass){
+    rcutils_time_point_value_t rcutils_now = 0;
+    rcutils_ret_t ret = RCUTILS_RET_ERROR;
+    ret = rcutils_system_time_now(&rcutils_now);
+    if (ret != RCUTILS_RET_OK) {
+        std::cout << "Could not get current time: " << rcl_get_error_string().str;
+        rcl_reset_error();
+        // TODO: throw an exception
+    }
+
+    return rcutils_now;
+}

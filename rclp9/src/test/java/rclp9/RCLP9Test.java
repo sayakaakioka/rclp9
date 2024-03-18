@@ -54,50 +54,71 @@ class RCLP9Test extends PApplet {
 
     @Test
     public final void testFloat64Publisher() {
-        rclp9.createPublisher(std_msgs.msg.Float64.class, "test_topic_1");
+        rclp9.createPublisher(std_msgs.msg.Float64.class, "test_topic_float64");
         rclp9.createWallClockTimer(500, this::publisherCallback_Float64);
         rclp9.spinOnce();
     }
 
     @Test
     public final void testPointPublisher() {
-        rclp9.createPublisher(geometry_msgs.msg.Point.class, "test_topic_2");
+        rclp9.createPublisher(geometry_msgs.msg.Point.class, "test_topic_point");
         rclp9.createWallClockTimer(500, this::publisherCallback_Point);
         rclp9.spinOnce();
     }
 
     @Test
     public final void testQuoternionPublisher() {
-        rclp9.createPublisher(geometry_msgs.msg.Quaternion.class, "test_topic_3");
+        rclp9.createPublisher(geometry_msgs.msg.Quaternion.class, "test_topic_quoternion");
         rclp9.createWallClockTimer(500, this::publisherCallback_Quaternion);
         rclp9.spinOnce();
     }
 
     @Test
     public final void testPosePublisher() {
-        rclp9.createPublisher(geometry_msgs.msg.Pose.class, "test_topic_4");
+        rclp9.createPublisher(geometry_msgs.msg.Pose.class, "test_topic_pose");
         rclp9.createWallClockTimer(500, this::publisherCallback_Pose);
+        rclp9.spinOnce();
+    }
+
+    @Test
+    public final void testTimePublisher(){
+        rclp9.createPublisher(builtin_interfaces.msg.Time.class, "test_topic_time");
+        rclp9.createWallClockTimer(500, this::publisherCallback_Time);
+        rclp9.spinOnce();
+    }
+
+    @Test
+    public final void testHeaderPublisher(){
+        rclp9.createPublisher(std_msgs.msg.Header.class, "test_topic_header");
+        rclp9.createWallClockTimer(500, this::publisherCallback_Header);
+        rclp9.spinOnce();
+    }
+
+    @Test
+    public final void testPoseStampedPublisher(){
+        rclp9.createPublisher(geometry_msgs.msg.PoseStamped.class, "test_topic_posestamped");
+        rclp9.createWallClockTimer(500, this::publisherCallback_PoseStamped);
         rclp9.spinOnce();
     }
 
     @Test
     public final void testVariousDatatypeSubscribers() {
         RCLP9 obj_1 = new RCLP9(this, "test_varopis_datatype_subscribers");
-        obj_1.createSubscriber(std_msgs.msg.Float64.class, "test_topic_1", new Consumer<std_msgs.msg.Float64>() {
+        obj_1.createSubscriber(std_msgs.msg.Float64.class, "test_topic_float64", new Consumer<std_msgs.msg.Float64>() {
             public void accept(final std_msgs.msg.Float64 msg) {
             }
         });
         obj_1.dispose();
 
         RCLP9 obj_2 = new RCLP9(this, "test_varopis_datatype_subscribers");
-        obj_2.createSubscriber(geometry_msgs.msg.Point.class, "test_topic_2", new Consumer<geometry_msgs.msg.Point>() {
+        obj_2.createSubscriber(geometry_msgs.msg.Point.class, "test_topic_point", new Consumer<geometry_msgs.msg.Point>() {
             public void accept(final geometry_msgs.msg.Point msg) {
             }
         });
         obj_2.dispose();
 
         RCLP9 obj_3 = new RCLP9(this, "test_varopis_datatype_subscribers");
-        obj_3.createSubscriber(geometry_msgs.msg.Quaternion.class, "test_topic_3",
+        obj_3.createSubscriber(geometry_msgs.msg.Quaternion.class, "test_topic_quoternion",
                 new Consumer<geometry_msgs.msg.Quaternion>() {
                     public void accept(final geometry_msgs.msg.Quaternion msg) {
                     }
@@ -105,11 +126,32 @@ class RCLP9Test extends PApplet {
         obj_3.dispose();
 
         RCLP9 obj_4 = new RCLP9(this, "test_varopis_datatype_subscribers");
-        obj_4.createSubscriber(geometry_msgs.msg.Pose.class, "test_topic_3", new Consumer<geometry_msgs.msg.Pose>() {
+        obj_4.createSubscriber(geometry_msgs.msg.Pose.class, "test_topic_pose", new Consumer<geometry_msgs.msg.Pose>() {
             public void accept(final geometry_msgs.msg.Pose msg) {
             }
         });
         obj_4.dispose();
+
+        RCLP9 obj_5 = new RCLP9(this, "test_varopis_datatype_subscribers");
+        obj_5.createSubscriber(builtin_interfaces.msg.Time.class, "test_topic_time", new Consumer<builtin_interfaces.msg.Time>() {
+            public void accept(final builtin_interfaces.msg.Time msg) {
+            }
+        });
+        obj_5.dispose();
+
+        RCLP9 obj_6 = new RCLP9(this, "test_varopis_datatype_subscribers");
+        obj_6.createSubscriber(std_msgs.msg.Header.class, "test_topic_time", new Consumer<std_msgs.msg.Header>() {
+            public void accept(final std_msgs.msg.Header msg) {
+            }
+        });
+        obj_6.dispose();
+
+        RCLP9 obj_7 = new RCLP9(this, "test_varopis_datatype_subscribers");
+        obj_7.createSubscriber(geometry_msgs.msg.PoseStamped.class, "test_topic_time", new Consumer<geometry_msgs.msg.PoseStamped>() {
+            public void accept(final geometry_msgs.msg.PoseStamped msg) {
+            }
+        });
+        obj_7.dispose();
     }
 
     @Test
@@ -178,6 +220,45 @@ class RCLP9Test extends PApplet {
         message.orientation.w = 64.0 * val;
         this.counter++;
         System.out.println("Publishing (Pose): [" + message + "]");
+        rclp9.publish(message);
+    }
+
+    private void publisherCallback_Time() {
+        rclp9.rcljava.time.Clock clock = new rclp9.rcljava.time.Clock();
+        builtin_interfaces.msg.Time message = new builtin_interfaces.msg.Time();
+        message = clock.now();
+        System.out.println("Publishing (Time): [" + message + "]");
+        rclp9.publish(message);
+    }
+
+    private void publisherCallback_Header() {
+        rclp9.rcljava.time.Clock clock = new rclp9.rcljava.time.Clock();
+        std_msgs.msg.Header message = new std_msgs.msg.Header();
+        message.stamp = clock.now();
+        message.frame_id = Integer.toString(this.counter);
+        this.counter++;
+        System.out.println("Publishing (Header): [" + message + "]");
+        rclp9.publish(message);
+    }
+
+    private void publisherCallback_PoseStamped() {
+        rclp9.rcljava.time.Clock clock = new rclp9.rcljava.time.Clock();
+        geometry_msgs.msg.PoseStamped message = new geometry_msgs.msg.PoseStamped();
+
+        message.header.stamp = clock.now();
+        message.header.frame_id = Integer.toString(this.counter);
+
+        double val = (double) this.counter / 100000000;
+        message.pose.position.x = val;
+        message.pose.position.y = 2.0 * val;
+        message.pose.position.z = 4.0 * val;
+        message.pose.orientation.x = 8.0 * val;
+        message.pose.orientation.y = 16.0 * val;
+        message.pose.orientation.z = 32.0 * val;
+        message.pose.orientation.w = 64.0 * val;
+
+        this.counter++;
+        System.out.println("Publishing (PoseStamped): [" + message + "]");
         rclp9.publish(message);
     }
 

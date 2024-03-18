@@ -14,8 +14,7 @@ import rclp9.rcljava.util.JNIUtils;
  * This class defines the structure for messages of String.
  */
 public final class String implements MessageDefinition {
-    private static final Logger logger = Logger.getLogger(new Object() {
-    }.getClass().getName());
+    private static final Logger logger = Logger.getLogger(new Object() {}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -31,6 +30,9 @@ public final class String implements MessageDefinition {
         }
     }
 
+    /**
+     * data in its raw
+     */
     public java.lang.String data = "";
 
     /**

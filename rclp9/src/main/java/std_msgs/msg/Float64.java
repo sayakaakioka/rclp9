@@ -14,8 +14,7 @@ import rclp9.rcljava.util.JNIUtils;
  * This class defines the structure for messages of Float64.
  */
 public class Float64 implements MessageDefinition {
-    private static final Logger logger = Logger.getLogger(new Object() {
-    }.getClass().getName());
+    private static final Logger logger = Logger.getLogger(new Object() {}.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -31,6 +30,9 @@ public class Float64 implements MessageDefinition {
         }
     }
 
+    /**
+     * data in its raw
+     */
     public double data;
 
     /**
