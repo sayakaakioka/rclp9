@@ -61,8 +61,8 @@ public final class Clock implements Disposable {
     public builtin_interfaces.msg.Time now(){
         long rclTime = nativeRCLSystemTimeNow();
         builtin_interfaces.msg.Time msgTime = new builtin_interfaces.msg.Time();
-        msgTime.sec = ((int) TimeUnit.SECONDS.convert(rclTime, TimeUnit.NANOSECONDS));
-        msgTime.nanosec = ((int) rclTime % (1000 * 1000 * 1000));
+        msgTime.sec = (int) (TimeUnit.SECONDS.convert(rclTime, TimeUnit.NANOSECONDS));
+        msgTime.nanosec = (int) (rclTime % (1000 * 1000 * 1000));
         return msgTime;
     }
 

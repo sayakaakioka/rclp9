@@ -37,6 +37,7 @@ public class Time implements MessageDefinition {
 
      /**
      * nanosec value in its raw
+     * (In ROS2, defined as uint32, but nanosec < 1000*1000*1000)
      */
     public int nanosec;
 
