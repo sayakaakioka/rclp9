@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 import processing.core.*;
 
 class RCLP9Test extends PApplet {
-    private RCLP9 rclp9;
+    private RCLP9 rcl;
     private int counter = 0;
 
     public RCLP9Test() {
         super();
-        rclp9 = new RCLP9(this, "test_node_rclp9");
+        rcl = new RCLP9(this, "test_node_rclp9");
     }
 
     @Test
@@ -54,51 +54,51 @@ class RCLP9Test extends PApplet {
 
     @Test
     public final void testFloat64Publisher() {
-        rclp9.createPublisher(std_msgs.msg.Float64.class, "test_topic_float64");
-        rclp9.createWallClockTimer(500, this::publisherCallback_Float64);
-        rclp9.spinOnce();
+        rcl.createPublisher(std_msgs.msg.Float64.class, "test_topic_float64");
+        rcl.createWallClockTimer(500, this::publisherCallback_Float64);
+        rcl.spinOnce();
     }
 
     @Test
     public final void testPointPublisher() {
-        rclp9.createPublisher(geometry_msgs.msg.Point.class, "test_topic_point");
-        rclp9.createWallClockTimer(500, this::publisherCallback_Point);
-        rclp9.spinOnce();
+        rcl.createPublisher(geometry_msgs.msg.Point.class, "test_topic_point");
+        rcl.createWallClockTimer(500, this::publisherCallback_Point);
+        rcl.spinOnce();
     }
 
     @Test
     public final void testQuoternionPublisher() {
-        rclp9.createPublisher(geometry_msgs.msg.Quaternion.class, "test_topic_quoternion");
-        rclp9.createWallClockTimer(500, this::publisherCallback_Quaternion);
-        rclp9.spinOnce();
+        rcl.createPublisher(geometry_msgs.msg.Quaternion.class, "test_topic_quoternion");
+        rcl.createWallClockTimer(500, this::publisherCallback_Quaternion);
+        rcl.spinOnce();
     }
 
     @Test
     public final void testPosePublisher() {
-        rclp9.createPublisher(geometry_msgs.msg.Pose.class, "test_topic_pose");
-        rclp9.createWallClockTimer(500, this::publisherCallback_Pose);
-        rclp9.spinOnce();
+        rcl.createPublisher(geometry_msgs.msg.Pose.class, "test_topic_pose");
+        rcl.createWallClockTimer(500, this::publisherCallback_Pose);
+        rcl.spinOnce();
     }
 
     @Test
-    public final void testTimePublisher(){
-        rclp9.createPublisher(builtin_interfaces.msg.Time.class, "test_topic_time");
-        rclp9.createWallClockTimer(500, this::publisherCallback_Time);
-        rclp9.spinOnce();
+    public final void testTimePublisher() {
+        rcl.createPublisher(builtin_interfaces.msg.Time.class, "test_topic_time");
+        rcl.createWallClockTimer(500, this::publisherCallback_Time);
+        rcl.spinOnce();
     }
 
     @Test
-    public final void testHeaderPublisher(){
-        rclp9.createPublisher(std_msgs.msg.Header.class, "test_topic_header");
-        rclp9.createWallClockTimer(500, this::publisherCallback_Header);
-        rclp9.spinOnce();
+    public final void testHeaderPublisher() {
+        rcl.createPublisher(std_msgs.msg.Header.class, "test_topic_header");
+        rcl.createWallClockTimer(500, this::publisherCallback_Header);
+        rcl.spinOnce();
     }
 
     @Test
-    public final void testPoseStampedPublisher(){
-        rclp9.createPublisher(geometry_msgs.msg.PoseStamped.class, "test_topic_posestamped");
-        rclp9.createWallClockTimer(500, this::publisherCallback_PoseStamped);
-        rclp9.spinOnce();
+    public final void testPoseStampedPublisher() {
+        rcl.createPublisher(geometry_msgs.msg.PoseStamped.class, "test_topic_posestamped");
+        rcl.createWallClockTimer(500, this::publisherCallback_PoseStamped);
+        rcl.spinOnce();
     }
 
     @Test
@@ -111,10 +111,11 @@ class RCLP9Test extends PApplet {
         obj_1.dispose();
 
         RCLP9 obj_2 = new RCLP9(this, "test_varopis_datatype_subscribers");
-        obj_2.createSubscriber(geometry_msgs.msg.Point.class, "test_topic_point", new Consumer<geometry_msgs.msg.Point>() {
-            public void accept(final geometry_msgs.msg.Point msg) {
-            }
-        });
+        obj_2.createSubscriber(geometry_msgs.msg.Point.class, "test_topic_point",
+                new Consumer<geometry_msgs.msg.Point>() {
+                    public void accept(final geometry_msgs.msg.Point msg) {
+                    }
+                });
         obj_2.dispose();
 
         RCLP9 obj_3 = new RCLP9(this, "test_varopis_datatype_subscribers");
@@ -133,10 +134,11 @@ class RCLP9Test extends PApplet {
         obj_4.dispose();
 
         RCLP9 obj_5 = new RCLP9(this, "test_varopis_datatype_subscribers");
-        obj_5.createSubscriber(builtin_interfaces.msg.Time.class, "test_topic_time", new Consumer<builtin_interfaces.msg.Time>() {
-            public void accept(final builtin_interfaces.msg.Time msg) {
-            }
-        });
+        obj_5.createSubscriber(builtin_interfaces.msg.Time.class, "test_topic_time",
+                new Consumer<builtin_interfaces.msg.Time>() {
+                    public void accept(final builtin_interfaces.msg.Time msg) {
+                    }
+                });
         obj_5.dispose();
 
         RCLP9 obj_6 = new RCLP9(this, "test_varopis_datatype_subscribers");
@@ -147,23 +149,24 @@ class RCLP9Test extends PApplet {
         obj_6.dispose();
 
         RCLP9 obj_7 = new RCLP9(this, "test_varopis_datatype_subscribers");
-        obj_7.createSubscriber(geometry_msgs.msg.PoseStamped.class, "test_topic_time", new Consumer<geometry_msgs.msg.PoseStamped>() {
-            public void accept(final geometry_msgs.msg.PoseStamped msg) {
-            }
-        });
+        obj_7.createSubscriber(geometry_msgs.msg.PoseStamped.class, "test_topic_time",
+                new Consumer<geometry_msgs.msg.PoseStamped>() {
+                    public void accept(final geometry_msgs.msg.PoseStamped msg) {
+                    }
+                });
         obj_7.dispose();
     }
 
     @Test
     public final void testFunctionalPublisher() {
-        rclp9.createPublisher(std_msgs.msg.String.class, "test_topic");
-        rclp9.createWallClockTimer(500, this::publisherCallback);
-        rclp9.spinOnce();
+        rcl.createPublisher(std_msgs.msg.String.class, "test_topic");
+        rcl.createWallClockTimer(500, this::publisherCallback);
+        rcl.spinOnce();
     }
 
     @Test
     public final void testFunctionalSubscriber() {
-        rclp9.createSubscriber(std_msgs.msg.String.class, "test_topic", this::subscriberCallback);
+        rcl.createSubscriber(std_msgs.msg.String.class, "test_topic", this::subscriberCallback);
         // This line will indefinitely pause the test until a message is received from
         // an external source.
         // rclp9.spinOnce();
@@ -174,7 +177,7 @@ class RCLP9Test extends PApplet {
         message.data = "Hello, world! " + this.counter;
         this.counter++;
         System.err.println("Publishing: [" + message.data + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void publisherCallback_Float64() {
@@ -182,7 +185,7 @@ class RCLP9Test extends PApplet {
         message.data = (double) this.counter / 100000000;
         this.counter++;
         System.out.println("Publishing (Float64): [" + message + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void publisherCallback_Point() {
@@ -193,7 +196,7 @@ class RCLP9Test extends PApplet {
         message.z = 4.0 * val;
         this.counter++;
         System.out.println("Publishing (Point): [" + message + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void publisherCallback_Quaternion() {
@@ -205,7 +208,7 @@ class RCLP9Test extends PApplet {
         message.w = 8.0 * val;
         this.counter++;
         System.out.println("Publishing (Quaternion): [" + message + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void publisherCallback_Pose() {
@@ -220,32 +223,29 @@ class RCLP9Test extends PApplet {
         message.orientation.w = 64.0 * val;
         this.counter++;
         System.out.println("Publishing (Pose): [" + message + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void publisherCallback_Time() {
-        rclp9.rcljava.time.Clock clock = new rclp9.rcljava.time.Clock();
         builtin_interfaces.msg.Time message = new builtin_interfaces.msg.Time();
-        message = clock.now();
+        message = rclp9.rcljava.time.Clock.now();
         System.out.println("Publishing (Time): [" + message + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void publisherCallback_Header() {
-        rclp9.rcljava.time.Clock clock = new rclp9.rcljava.time.Clock();
         std_msgs.msg.Header message = new std_msgs.msg.Header();
-        message.stamp = clock.now();
+        message.stamp = rclp9.rcljava.time.Clock.now();
         message.frame_id = Integer.toString(this.counter);
         this.counter++;
         System.out.println("Publishing (Header): [" + message + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void publisherCallback_PoseStamped() {
-        rclp9.rcljava.time.Clock clock = new rclp9.rcljava.time.Clock();
         geometry_msgs.msg.PoseStamped message = new geometry_msgs.msg.PoseStamped();
 
-        message.header.stamp = clock.now();
+        message.header.stamp = rclp9.rcljava.time.Clock.now();
         message.header.frame_id = Integer.toString(this.counter);
 
         double val = (double) this.counter / 100000000;
@@ -259,7 +259,7 @@ class RCLP9Test extends PApplet {
 
         this.counter++;
         System.out.println("Publishing (PoseStamped): [" + message + "]");
-        rclp9.publish(message);
+        rcl.publish(message);
     }
 
     private void subscriberCallback(final std_msgs.msg.String msg) {

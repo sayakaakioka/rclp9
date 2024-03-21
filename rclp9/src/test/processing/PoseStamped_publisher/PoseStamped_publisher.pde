@@ -1,19 +1,18 @@
 import rclp9.*;
 
 int counter = 0;
-RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9_PoseStamped_publisher");
+RCLP9 rcl = new RCLP9(this, "test_node_rclp9_PoseStamped_publisher");
 
 void setup() {
-  rclp9.createPublisher(geometry_msgs.msg.PoseStamped.class, "test_PoseStamped_topic");
-  rclp9.createWallClockTimer(500, this::timerCallback);
-  rclp9.spin();
+  rcl.createPublisher(geometry_msgs.msg.PoseStamped.class, "test_PoseStamped_topic");
+  rcl.createWallClockTimer(500, this::timerCallback);
+  rcl.spin();
 }
 
 void timerCallback() {
-  rclp9.rcljava.time.Clock clock = new rclp9.rcljava.time.Clock();
   geometry_msgs.msg.PoseStamped message = new geometry_msgs.msg.PoseStamped();
 
-  message.header.stamp = clock.now();
+  message.header.stamp = rclp9.rcljava.time.Clock.now();
   message.header.frame_id = Integer.toString(this.counter);
 
   double val = (double) this.counter / 100000000;
@@ -27,7 +26,7 @@ void timerCallback() {
 
   this.counter++;
   System.out.println("Publishing: [" + message + "]");
-  rclp9.publish(message);
+  rcl.publish(message);
 }
 
 

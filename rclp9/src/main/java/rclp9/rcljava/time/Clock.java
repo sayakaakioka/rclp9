@@ -13,7 +13,8 @@ import rclp9.rcljava.util.JNIUtils;
  * This class creates and manages ROS2 handle for a clock.
  */
 public final class Clock implements Disposable {
-    private static final Logger logger = Logger.getLogger(new Object(){}.getClass().getName());
+    private static final Logger logger = Logger.getLogger(new Object() {
+    }.getClass().getName());
     {
         logger.addHandler(new ConsoleHandler());
         logger.setLevel(Level.INFO);
@@ -21,7 +22,8 @@ public final class Clock implements Disposable {
 
     static {
         try {
-            JNIUtils.loadImplementation(new Object(){}.getClass().getEnclosingClass());
+            JNIUtils.loadImplementation(new Object() {
+            }.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
             logger.severe("Failed to load native library.");
             System.exit(1);
@@ -56,9 +58,10 @@ public final class Clock implements Disposable {
 
     /**
      * Gets current time in builtin_interfaces.msg.Time.
+     *
      * @return current time
      */
-    public builtin_interfaces.msg.Time now(){
+    public final static builtin_interfaces.msg.Time now() {
         long rclTime = nativeRCLSystemTimeNow();
         builtin_interfaces.msg.Time msgTime = new builtin_interfaces.msg.Time();
         msgTime.sec = (int) (TimeUnit.SECONDS.convert(rclTime, TimeUnit.NANOSECONDS));
