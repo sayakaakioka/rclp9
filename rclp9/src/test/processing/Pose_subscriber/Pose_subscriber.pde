@@ -1,8 +1,8 @@
 import rclp9.*;
 
 void setup(){
-    RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9_Pose_subscriber");
-    rclp9.createSubscriber(geometry_msgs.msg.Pose.class, "test_Pose_topic", this::subscriberCallback);
+    RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9_pose_subscriber");
+    rclp9.createSubscriber(geometry_msgs.msg.Pose.class, "test_pose_topic", this::subscriberCallback);
     rclp9.spin();
 }
 

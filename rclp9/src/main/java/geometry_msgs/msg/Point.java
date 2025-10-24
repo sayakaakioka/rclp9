@@ -25,7 +25,8 @@ public class Point implements MessageDefinition {
             JNIUtils.loadImplementation(new Object() {
             }.getClass().getEnclosingClass());
         } catch (UnsatisfiedLinkError e) {
-            logger.severe("Failed to load native library.");
+            logger.severe(logger.getName() + ": Failed to load native library.");
+            e.printStackTrace();
             System.exit(1);
         }
     }

@@ -1,10 +1,10 @@
 import rclp9.*;
 
 int counter = 0;
-RCLP9 rcl = new RCLP9(this, "test_node_rclp9_PoseStamped_publisher");
+RCLP9 rcl = new RCLP9(this, "test_node_rclp9_posestamped_publisher");
 
 void setup() {
-  rcl.createPublisher(geometry_msgs.msg.PoseStamped.class, "test_PoseStamped_topic");
+  rcl.createPublisher(geometry_msgs.msg.PoseStamped.class, "test_posestamped_topic");
   rcl.createWallClockTimer(500, this::timerCallback);
   rcl.spin();
 }

@@ -1,0 +1,64 @@
+name: rclp9-test-all
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # x86_64
+          - arch: x86_64
+            runner: ubuntu-22.04
+            distro: humble
+            java_home: /usr/lib/jvm/java-21-openjdk-amd64
+          - arch: x86_64
+            runner: ubuntu-24.04
+            distro: jazzy
+            java_home: /usr/lib/jvm/java-21-openjdk-amd64
+          - arch: x86_64
+            runner: ubuntu-24.04
+            distro: kilted
+            java_home: /usr/lib/jvm/java-21-openjdk-amd64
+          # arm64
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+            distro: humble
+            java_home: /usr/lib/jvm/java-21-openjdk-arm64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            distro: jazzy
+            java_home: /usr/lib/jvm/java-21-openjdk-arm64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            distro: kilted
+            java_home: /usr/lib/jvm/java-21-openjdk-arm64
+
+    runs-on: ${{ matrix.runner }}
+
+    container:
+      image: ghcr.io/sayakaakioka/ros2-p5-dev:${{ matrix.distro }}
+
+    env:
+      ROS_ROOT: /opt/ros/${{ matrix.distro }}
+      JAVA_HOME: ${{ matrix.java_home }}
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.caching=true -Dorg.gradle.parallel=true
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Print tool versions (debug)
+        run: |
+          uname -m
+          java -version
+          g++ --version || true
+          echo "ROS_ROOT=${ROS_ROOT}"
+          echo "JAVA_HOME=${JAVA_HOME}"
+
+      - name: Run tests
+        run: ./gradlew --no-daemon clean test --stacktrace

@@ -1,10 +1,10 @@
 import rclp9.*;
 
 int counter = 0;
-RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9_Point_publisher");
+RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9_point_publisher");
 
 void setup() {
-  rclp9.createPublisher(geometry_msgs.msg.Point.class, "test_Point_topic");
+  rclp9.createPublisher(geometry_msgs.msg.Point.class, "test_point_topic");
   rclp9.createWallClockTimer(500, this::timerCallback);
   rclp9.spin();
 }

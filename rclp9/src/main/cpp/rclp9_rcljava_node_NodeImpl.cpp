@@ -65,7 +65,8 @@ JNIEXPORT jlong JNICALL Java_rclp9_rcljava_node_NodeImpl_nativeCreateTimerHandle
     rcl_timer_t * timer = static_cast<rcl_timer_t *>(malloc(sizeof(rcl_timer_t)));
     *timer = rcl_get_zero_initialized_timer();
 
-    rcl_ret_t ret = rcl_timer_init(timer, clock, context, timer_period, NULL, rcl_get_default_allocator());
+    //rcl_ret_t ret = rcl_timer_init(timer, clock, context, timer_period, NULL, rcl_get_default_allocator());
+    rcl_ret_t ret = rcl_timer_init2(timer, clock, context, timer_period, NULL, rcl_get_default_allocator(), true);
     if (ret != RCL_RET_OK) {
         std::cout << "Failed to create timer: " << rcl_get_error_string().str;
         rcl_reset_error();

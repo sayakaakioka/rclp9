@@ -16,14 +16,11 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+
+    maven { url = uri("https://jogamp.org/deployment/maven/") }
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
-    testImplementation(libs.junit.jupiter)
-
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
     // This dependency is exported to consumers, that is to say found on their compile classpath.
     //api(libs.commons.math3)
 
@@ -31,26 +28,53 @@ dependencies {
     implementation(libs.guava)
 
     // Processing core libraries
-    implementation(files("libs/core.jar"))
+    implementation(libs.processing.core)
 
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
-    implementation("org.apache.commons:commons-lang3:3.14.0")
+    implementation(libs.commons.lang3)
+}
+
+testing{
+    suites {
+        // Define a test suite
+        val test by getting(JvmTestSuite::class) {
+            // Use JUnit Jupiter test engine
+            useJUnitJupiter()
+
+            dependencies {
+                implementation(platform(libs.junit.bom))
+                implementation(libs.jupiter)
+                implementation(libs.processing.core)
+            }
+
+            targets.all{
+                testTask.configure {
+                    // Show standard out and standard error of the test JVM(s) on the console
+                    testLogging.showStandardStreams = true
+
+                    systemProperty(
+                        "java.library.path",
+                        "${projectDir}/libs/rclp9:${projectDir}/libs/ros:${projectDir}/libs"
+                    )
+
+                    jvmArgs(
+                        "-Xcheck:jni",
+                        "-Xlog:jni=trace",
+                        "-XX:ErrorFile=${buildDir}/hs_err_%p.log",
+                        "-XX:+CreateCoredumpOnCrash"
+                    )
+                }
+            }
+        }
+    }
 }
 
 java{
     toolchain{
         // The message, "Path for java installation '/usr/lib/jvm/openjdk-17' (Common Linux Locations)
         // does not contain a java executable", is an expected behavior.
-        //languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
-}
-
-tasks.withType<JavaCompile> {
-    options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xdiags:verbose"))
-}
-
-tasks.withType<Test> {
-    systemProperty("java.library.path", "${projectDir}/libs/rclp9:${projectDir}/libs/ros:${projectDir}/libs")
 }
 
 tasks.named("jar") {
@@ -83,18 +107,291 @@ tasks.named<Delete>("clean"){
     }
 }
 
-tasks.named("compileJava"){
-    doLast {
-        exec{
-            // Because gradle doesn't support linux aarch64 ...
-            commandLine("${projectDir}/src/main/python/nativelib_builder.py")
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xdiags:verbose"))
+}
+
+val jniHeadersDir = layout.buildDirectory.dir("generated/sources/headers/java/main")
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf("-h", jniHeadersDir.get().asFile.absolutePath))
+}
+
+val rosRoots = listOf("/opt/ros/kilted", "/opt/ros/humble", "/opt/ros/jazzy")
+val rosRootProp = (findProperty("ROS_ROOT") as String?)?.ifBlank { null }
+val rosRoot: File? = rosRootProp?.let(::File) ?: rosRoots.map(::File).firstOrNull { it.exists() }
+
+val rosDistro: String? = rosRoot?.name
+val rosInclude: File? = rosRoot?.resolve("include")
+val rosLibOrg: File? = rosRoot?.resolve("lib")
+
+val moduleInclude = when (rosDistro) {
+    "kilted" -> listOf(
+        "builtin_interfaces",
+        "geometry_msgs",
+        "rcl",
+        "rcl_yaml_param_parser",
+        "rcutils",
+        "rmw",
+        "rosidl_dynamic_typesupport",
+        "rosidl_runtime_c",
+        "rosidl_typesupport_interface",
+        "service_msgs",
+        "std_msgs",
+        "type_description_interfaces"
+    )
+    "jazzy" -> listOf(
+        "builtin_interfaces",
+        "geometry_msgs",
+        "rcl",
+        "rcl_yaml_param_parser",
+        "rcutils",
+        "rmw",
+        "rosidl_dynamic_typesupport",
+        "rosidl_runtime_c",
+        "rosidl_typesupport_interface",
+        "std_msgs",
+        "type_description_interfaces"
+    )
+    else -> listOf( // humble
+        "builtin_interfaces",
+        "geometry_msgs",
+        "rcl",
+        "rcl_yaml_param_parser",
+        "rcutils",
+        "rmw",
+        "rosidl_runtime_c",
+        "rosidl_typesupport_interface",
+        "std_msgs"
+    )
+}
+
+val moduleLib = when (rosDistro) {
+    "kilted" -> listOf(
+        "ament_index_cpp",
+        "builtin_interfaces__rosidl_generator_c",
+        "builtin_interfaces__rosidl_typesupport_c",
+        "builtin_interfaces__rosidl_typesupport_fastrtps_c",
+        "builtin_interfaces__rosidl_typesupport_introspection_c",
+        "fastcdr",
+        "fastdds",
+        "geometry_msgs__rosidl_generator_c",
+        "geometry_msgs__rosidl_typesupport_c",
+        "geometry_msgs__rosidl_typesupport_fastrtps_c",
+        "geometry_msgs__rosidl_typesupport_introspection_c",
+        "rcl",
+        "rcl_interfaces__rosidl_generator_c",
+        "rcl_interfaces__rosidl_typesupport_c",
+        "rcl_logging_interface",
+        "rcl_logging_spdlog",
+        "rcl_yaml_param_parser",
+        "rcpputils",
+        "rcutils",
+        "rmw",
+        "rmw_dds_common",
+        "rmw_dds_common__rosidl_generator_c",
+        "rmw_dds_common__rosidl_typesupport_cpp",
+        "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
+        "rmw_dds_common__rosidl_typesupport_introspection_cpp",
+        "rmw_fastrtps_cpp",
+        "rmw_fastrtps_shared_cpp",
+        "rmw_implementation",
+        "rmw_security_common",
+        "rosidl_dynamic_typesupport",
+        "rosidl_dynamic_typesupport_fastrtps",
+        "rosidl_runtime_c",
+        "rosidl_typesupport_c",
+        "rosidl_typesupport_cpp",
+        "rosidl_typesupport_fastrtps_c",
+        "rosidl_typesupport_fastrtps_cpp",
+        "rosidl_typesupport_introspection_c",
+        "rosidl_typesupport_introspection_cpp",
+        "service_msgs__rosidl_generator_c",
+        "std_msgs__rosidl_generator_c",
+        "std_msgs__rosidl_typesupport_c",
+        "std_msgs__rosidl_typesupport_fastrtps_c",
+        "std_msgs__rosidl_typesupport_introspection_c",
+        "tracetools",
+        "type_description_interfaces__rosidl_generator_c",
+        "type_description_interfaces__rosidl_typesupport_c"
+    )
+    "jazzy" -> listOf(
+        "ament_index_cpp",
+        "builtin_interfaces__rosidl_generator_c",
+        "builtin_interfaces__rosidl_typesupport_c",
+        "builtin_interfaces__rosidl_typesupport_fastrtps_c",
+        "builtin_interfaces__rosidl_typesupport_introspection_c",
+        "fastcdr",
+        "fastdds",
+        "geometry_msgs__rosidl_generator_c",
+        "geometry_msgs__rosidl_typesupport_c",
+        "geometry_msgs__rosidl_typesupport_fastrtps_c",
+        "geometry_msgs__rosidl_typesupport_introspection_c",
+        "rcl",
+        "rcl_interfaces__rosidl_generator_c",
+        "rcl_interfaces__rosidl_typesupport_c",
+        "rcl_logging_interface",
+        "rcl_logging_spdlog",
+        "rcl_yaml_param_parser",
+        "rcpputils",
+        "rcutils",
+        "rmw",
+        "rmw_dds_common",
+        "rmw_dds_common__rosidl_generator_c",
+        "rmw_dds_common__rosidl_typesupport_cpp",
+        "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
+        "rmw_dds_common__rosidl_typesupport_introspection_cpp",
+        "rmw_fastrtps_cpp",
+        "rmw_fastrtps_shared_cpp",
+        "rmw_implementation",
+        "rosidl_dynamic_typesupport",
+        "rosidl_dynamic_typesupport_fastrtps",
+        "rosidl_runtime_c",
+        "rosidl_typesupport_c",
+        "rosidl_typesupport_cpp",
+        "rosidl_typesupport_fastrtps_c",
+        "rosidl_typesupport_fastrtps_cpp",
+        "rosidl_typesupport_introspection_c",
+        "rosidl_typesupport_introspection_cpp",
+        "std_msgs__rosidl_generator_c",
+        "std_msgs__rosidl_typesupport_c",
+        "std_msgs__rosidl_typesupport_fastrtps_c",
+        "std_msgs__rosidl_typesupport_introspection_c",
+        "tracetools"
+    )
+    else -> listOf( // humble
+        "ament_index_cpp",
+        "builtin_interfaces__rosidl_generator_c",
+        "builtin_interfaces__rosidl_typesupport_c",
+        "builtin_interfaces__rosidl_typesupport_fastrtps_c",
+        "builtin_interfaces__rosidl_typesupport_introspection_c",
+        "fastcdr",
+        "fastdds",
+        "geometry_msgs__rosidl_generator_c",
+        "geometry_msgs__rosidl_typesupport_c",
+        "geometry_msgs__rosidl_typesupport_fastrtps_c",
+        "geometry_msgs__rosidl_typesupport_introspection_c",
+        "rcl",
+        "rcl_interfaces__rosidl_generator_c",
+        "rcl_interfaces__rosidl_typesupport_c",
+        "rcl_logging_interface",
+        "rcl_logging_spdlog",
+        "rcl_yaml_param_parser",
+        "rcpputils",
+        "rcutils",
+        "rmw",
+        "rmw_dds_common",
+        "rmw_dds_common__rosidl_generator_c",
+        "rmw_dds_common__rosidl_typesupport_cpp",
+        "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
+        "rmw_dds_common__rosidl_typesupport_introspection_cpp",
+        "rmw_fastrtps_cpp",
+        "rmw_fastrtps_shared_cpp",
+        "rmw_implementation",
+        "rosidl_runtime_c",
+        "rosidl_typesupport_c",
+        "rosidl_typesupport_cpp",
+        "rosidl_typesupport_fastrtps_c",
+        "rosidl_typesupport_fastrtps_cpp",
+        "rosidl_typesupport_introspection_c",
+        "rosidl_typesupport_introspection_cpp",
+        "std_msgs__rosidl_generator_c",
+        "std_msgs__rosidl_typesupport_c",
+        "std_msgs__rosidl_typesupport_fastrtps_c",
+        "std_msgs__rosidl_typesupport_introspection_c",
+        "tracetools"
+    )
+}
+
+fun jniIncludeArgs(): List<String> {
+    val launcher = javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) }.get()
+    val javaHome = launcher.metadata.installationPath.asFile
+    val inc = javaHome.resolve("include")
+    val osInc = inc.resolve("linux")
+    return listOf("-I${jniHeadersDir.get().asFile.absolutePath}", "-I${inc.absolutePath}", "-I${osInc.absolutePath}")
+}
+
+fun rosIncludeArgs(): List<String> =
+    if (rosInclude?.exists() == true) moduleInclude.map { "-I${rosInclude.resolve(it).absolutePath}" } else emptyList()
+
+
+val rclp9LibDir: Directory = layout.projectDirectory.dir("libs/rclp9")
+val rosLibDir: Directory = layout.projectDirectory.dir("libs/ros")
+
+val syncRosLibs by tasks.registering(Sync::class) {
+    if ( rosLibOrg != null && rosLibOrg?.exists() == true && moduleLib.isNotEmpty() ){
+        from(rosLibOrg) {
+            include(moduleLib.map { "lib$it.so*" })
         }
+        into(rosLibDir)
     }
 }
 
-tasks.named<Test>("test") {
-    useJUnitPlatform()
+fun gpp(): String = System.getenv("CXX") ?: "g++"
+val withDebug = (findProperty("nativeDebug") as String?)?.toBooleanStrictOrNull() ?: true
+val commonCompileFlags = mutableListOf("-shared", "-fPIC", "-std=c++17").apply { if (withDebug) add("-g") }
+
+val cppDir = layout.projectDirectory.dir("src/main/cpp")
+val cppFiles = fileTree(cppDir) { include("**/*.cpp") }.files.sorted()
+
+val buildNative by tasks.registering {
+    group = "build"
+    description = "Build JNI native libs (.so) from src/main/cpp/*.cpp"
+    dependsOn(syncRosLibs, tasks.named("compileJava")) 
 }
 
+cppFiles.forEach { src ->
+    val base = src.nameWithoutExtension
+    val outSo = rclp9LibDir.file("lib${base}.so").asFile
 
+    val t = tasks.register<Exec>("buildSo_${base}") {
+        group = "build"
+        dependsOn(syncRosLibs, tasks.named("compileJava"))
+        doFirst {
+            outSo.parentFile.mkdirs()
+            rosLibDir.asFile.mkdirs()
+        }
+        val cmd = mutableListOf<String>()
+        cmd += gpp()
+        cmd += commonCompileFlags
+        cmd += jniIncludeArgs()
+        cmd += rosIncludeArgs()
+        cmd += listOf("-o", outSo.absolutePath, src.absolutePath)
+        
+        if (rosLibOrg?.exists() == true) {
+            cmd += "-L${rosLibDir.asFile.absolutePath}"
+            moduleLib.forEach { cmd += "-l$it" }
+        }
 
+        commandLine(cmd)
+        // println(cmd.joinToString(" "))
+    }
+    buildNative.configure { dependsOn(t) }
+}
+
+tasks.named("test") {
+    dependsOn(buildNative)
+}
+
+tasks.withType<Test>().configureEach {
+    val pidFile = layout.buildDirectory.file("xvfb-${name}.pid").get().asFile
+    doFirst {
+        val hasDisplay = System.getenv("DISPLAY")?.isNotBlank() == true
+        if (!hasDisplay) {
+            exec {
+                commandLine("bash","-lc","command -v Xvfb >/dev/null 2>&1 || { echo 'ERROR: Xvfb not installed. sudo apt-get install -y xvfb'; exit 1; }")
+            }
+            exec {
+                commandLine("bash","-lc","Xvfb :99 -screen 0 640x480x24 >/dev/null 2>&1 & echo $! > ${pidFile.absolutePath}")
+            }
+            environment("DISPLAY", ":99")
+            systemProperty("java.awt.headless", "false")
+        }
+    }
+
+    doLast {
+        if (pidFile.exists()) {
+            exec { commandLine("bash","-lc","kill $(cat ${pidFile.absolutePath}) >/dev/null 2>&1 || true") }
+            pidFile.delete()
+        }
+    }
+}

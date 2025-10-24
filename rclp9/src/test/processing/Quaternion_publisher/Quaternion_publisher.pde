@@ -1,10 +1,10 @@
 import rclp9.*;
 
 int counter = 0;
-RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9_Quaternion_publisher");
+RCLP9 rclp9 = new RCLP9(this, "test_node_rclp9_quaternion_publisher");
 
 void setup() {
-  rclp9.createPublisher(geometry_msgs.msg.Quaternion.class, "test_Quaternion_topic");
+  rclp9.createPublisher(geometry_msgs.msg.Quaternion.class, "test_quaternion_topic");
   rclp9.createWallClockTimer(500, this::timerCallback);
   rclp9.spin();
 }

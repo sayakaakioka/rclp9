@@ -1,10 +1,10 @@
 import rclp9.*;
 
 int counter = 0;
-RCLP9 rcl = new RCLP9(this, "test_node_rclp9_Header_publisher");
+RCLP9 rcl = new RCLP9(this, "test_node_rclp9_header_publisher");
 
 void setup() {
-    rcl.createPublisher(std_msgs.msg.Header.class, "test_Header_topic");
+    rcl.createPublisher(std_msgs.msg.Header.class, "test_header_topic");
     rcl.createWallClockTimer(500, this::timerCallback);
     rcl.spin();
 }
