@@ -62,3 +62,13 @@ jobs:
 
       - name: Run tests
         run: ./gradlew --no-daemon clean test --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-x86_64-humble
+          path: |
+            rclp9/build/reports/tests/test
+            rclp9/build/test-results/test
+            rclp9/build/hs_err_*.log
