@@ -3,6 +3,7 @@
 #include "rcl/error_handling.h"
 #include "rcl/rcl.h"
 
+#include <rclx/rcl_timer.hpp>
 #include "rclp9_rcljava_node_NodeImpl.h"
 
 JNIEXPORT jlong JNICALL Java_rclp9_rcljava_node_NodeImpl_nativeCreatePublisherHandle(JNIEnv * env, jclass, jlong node_handle, jclass jmessage_class, jstring jtopic, jlong qos_profile_handle){
@@ -66,7 +67,9 @@ JNIEXPORT jlong JNICALL Java_rclp9_rcljava_node_NodeImpl_nativeCreateTimerHandle
     *timer = rcl_get_zero_initialized_timer();
 
     //rcl_ret_t ret = rcl_timer_init(timer, clock, context, timer_period, NULL, rcl_get_default_allocator());
-    rcl_ret_t ret = rcl_timer_init2(timer, clock, context, timer_period, NULL, rcl_get_default_allocator(), true);
+    // rcl_ret_t ret = rcl_timer_init2(timer, clock, context, timer_period, NULL, rcl_get_default_allocator(), true);
+    rcl_ret_t ret = rclx::timer_init(timer, clock, context, timer_period, NULL, rcl_get_default_allocator(), true);    
+
     if (ret != RCL_RET_OK) {
         std::cout << "Failed to create timer: " << rcl_get_error_string().str;
         rcl_reset_error();

@@ -1,44 +1,42 @@
 {
-	"name": "rclp9-dev",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			"JDK_VERSION": "21"
-		}
-	},
-	"overrideCommand": false,
-	"remoteUser": "ubuntu",
-	"updateRemoteUserUID": true,
-	"containerEnv": {
-		"GRADLE_USER_HOME": "/home/ubuntu/.gradle",
-		"HOME_DIR": "/home/ubuntu"
-	},
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"vscjava.vscode-java-pack",
-				"ms-azuretools.vscode-docker",
-				"ms-vscode.cpptools",
-				"ms-vscode.cmake-tools",
-				"ms-python.python"
-			],
-			"settings": {
-				"java.configuration.runtimes": [
-					{
-						"name": "JavaSE-21",
-						"path": "${env:JAVA_HOME}",
-						"default": true
-					}
-				],
-				"java.import.gradle.wrapper.enabled": true,
-				"java.import.gradle.enabled": true,
-				"java.import.maven.enabled": false
-			}
-		}
-	},
-	"workspaceFolder": "/home/ubuntu/projects/rclp9",
-	"mounts" : [
-		"source=${localWorkspaceFolder},target=/home/ubuntu/projects/rclp9,type=bind,consistency=cached"
-	],
-	"shutdownAction": "stopContainer"
+  "name": "rclp9-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "JDK_VERSION": "21"
+    }
+  },
+  "overrideCommand": false,
+  "remoteUser": "ubuntu",
+  "updateRemoteUserUID": true,
+  "containerEnv": {
+    "GRADLE_USER_HOME": "/home/ubuntu/.gradle",
+    "HOME_DIR": "/home/ubuntu"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-python.python"
+      ],
+      "settings": {
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-21",
+            "path": "${env:JAVA_HOME}",
+            "default": true
+          }
+        ],
+        "java.import.gradle.wrapper.enabled": true,
+        "java.import.gradle.enabled": true,
+        "java.import.maven.enabled": false
+      }
+    }
+  },
+  "workspaceFolder": "/home/ubuntu/projects/rclp9",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/ubuntu/projects/rclp9,type=bind,consistency=cached",
+  "shutdownAction": "stopContainer"
 }

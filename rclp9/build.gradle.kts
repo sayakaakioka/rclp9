@@ -4,6 +4,7 @@
  * This generated file contains a sample Java library project to get you started.
  * For more details on building Java & JVM projects, please refer to https://docs.gradle.org/8.5/userguide/building_java_projects.html in the Gradle documentation.
  */
+import java.io.ByteArrayOutputStream
 
 plugins {
     // Apply the java-library plugin for API and implementation separation.
@@ -116,7 +117,7 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("-h", jniHeadersDir.get().asFile.absolutePath))
 }
 
-val rosRoots = listOf("/opt/ros/kilted", "/opt/ros/humble", "/opt/ros/jazzy")
+val rosRoots = listOf("/opt/ros/kilted", "/opt/ros/jazzy", "/opt/ros/humble")
 val rosRootProp = (findProperty("ROS_ROOT") as String?)?.ifBlank { null }
 val rosRoot: File? = rosRootProp?.let(::File) ?: rosRoots.map(::File).firstOrNull { it.exists() }
 
@@ -149,6 +150,7 @@ val moduleInclude = when (rosDistro) {
         "rosidl_dynamic_typesupport",
         "rosidl_runtime_c",
         "rosidl_typesupport_interface",
+        "service_msgs",
         "std_msgs",
         "type_description_interfaces"
     )
@@ -192,7 +194,6 @@ val moduleLib = when (rosDistro) {
         "rmw_dds_common__rosidl_typesupport_cpp",
         "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
         "rmw_dds_common__rosidl_typesupport_introspection_cpp",
-        "rmw_fastrtps_cpp",
         "rmw_fastrtps_shared_cpp",
         "rmw_implementation",
         "rmw_security_common",
@@ -221,7 +222,6 @@ val moduleLib = when (rosDistro) {
         "builtin_interfaces__rosidl_typesupport_fastrtps_c",
         "builtin_interfaces__rosidl_typesupport_introspection_c",
         "fastcdr",
-        "fastdds",
         "geometry_msgs__rosidl_generator_c",
         "geometry_msgs__rosidl_typesupport_c",
         "geometry_msgs__rosidl_typesupport_fastrtps_c",
@@ -240,7 +240,6 @@ val moduleLib = when (rosDistro) {
         "rmw_dds_common__rosidl_typesupport_cpp",
         "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
         "rmw_dds_common__rosidl_typesupport_introspection_cpp",
-        "rmw_fastrtps_cpp",
         "rmw_fastrtps_shared_cpp",
         "rmw_implementation",
         "rosidl_dynamic_typesupport",
@@ -252,11 +251,14 @@ val moduleLib = when (rosDistro) {
         "rosidl_typesupport_fastrtps_cpp",
         "rosidl_typesupport_introspection_c",
         "rosidl_typesupport_introspection_cpp",
+        "service_msgs__rosidl_generator_c",
         "std_msgs__rosidl_generator_c",
         "std_msgs__rosidl_typesupport_c",
         "std_msgs__rosidl_typesupport_fastrtps_c",
         "std_msgs__rosidl_typesupport_introspection_c",
-        "tracetools"
+        "tracetools",
+        "type_description_interfaces__rosidl_generator_c",
+        "type_description_interfaces__rosidl_typesupport_c"
     )
     else -> listOf( // humble
         "ament_index_cpp",
@@ -265,7 +267,6 @@ val moduleLib = when (rosDistro) {
         "builtin_interfaces__rosidl_typesupport_fastrtps_c",
         "builtin_interfaces__rosidl_typesupport_introspection_c",
         "fastcdr",
-        "fastdds",
         "geometry_msgs__rosidl_generator_c",
         "geometry_msgs__rosidl_typesupport_c",
         "geometry_msgs__rosidl_typesupport_fastrtps_c",
@@ -284,7 +285,6 @@ val moduleLib = when (rosDistro) {
         "rmw_dds_common__rosidl_typesupport_cpp",
         "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
         "rmw_dds_common__rosidl_typesupport_introspection_cpp",
-        "rmw_fastrtps_cpp",
         "rmw_fastrtps_shared_cpp",
         "rmw_implementation",
         "rosidl_runtime_c",
@@ -328,7 +328,8 @@ val syncRosLibs by tasks.registering(Sync::class) {
 
 fun gpp(): String = System.getenv("CXX") ?: "g++"
 val withDebug = (findProperty("nativeDebug") as String?)?.toBooleanStrictOrNull() ?: true
-val commonCompileFlags = mutableListOf("-shared", "-fPIC", "-std=c++17").apply { if (withDebug) add("-g") }
+val projectInclude = "${projectDir}/src/main/cpp/include"
+val commonCompileFlags = mutableListOf("-shared", "-fPIC", "-std=c++17", "-I${projectInclude}").apply { if (withDebug) add("-g") }
 
 val cppDir = layout.projectDirectory.dir("src/main/cpp")
 val cppFiles = fileTree(cppDir) { include("**/*.cpp") }.files.sorted()
@@ -339,31 +340,82 @@ val buildNative by tasks.registering {
     dependsOn(syncRosLibs, tasks.named("compileJava")) 
 }
 
+val probeOutFile = layout.buildDirectory.file("generated/probe_rcl_timer_init2.txt")
+tasks.register("probeRclTimerInit2") {
+    outputs.file(probeOutFile)
+    doLast {
+        val dir = probeOutFile.get().asFile.parentFile
+        dir.mkdirs()
+        val probeCpp = File(dir, "probe_rcl_timer_init2.cpp")
+        val probeObj = File(dir, "probe_rcl_timer_init2.o")
+        probeCpp.writeText(
+            """
+            #include <rcl/timer.h>
+            int main() {
+                (void)&::rcl_timer_init2;
+                return 0;
+            }
+            """.trimIndent()
+        )
+
+        val cmd = mutableListOf<String>()
+        cmd += gpp()
+        cmd += commonCompileFlags
+
+        cmd += rosIncludeArgs()
+        cmd += listOf("-c", probeCpp.absolutePath, "-o", probeObj.absolutePath)
+
+        val output = ByteArrayOutputStream()
+        val result = exec {
+            commandLine(cmd)
+            isIgnoreExitValue = true
+            standardOutput = output
+            errorOutput = output
+        }
+
+        val hasInit2 = (result.exitValue == 0)
+        probeOutFile.get().asFile.writeText( if (hasInit2) "1" else "0" )
+        logger.lifecycle("probe rcl_timer_init2: ${if (hasInit2) "FOUND" else "NOT FOUND"}")
+    }
+}
+
 cppFiles.forEach { src ->
     val base = src.nameWithoutExtension
     val outSo = rclp9LibDir.file("lib${base}.so").asFile
 
     val t = tasks.register<Exec>("buildSo_${base}") {
         group = "build"
-        dependsOn(syncRosLibs, tasks.named("compileJava"))
+        dependsOn(syncRosLibs, tasks.named("compileJava"), tasks.named("probeRclTimerInit2"))
         doFirst {
             outSo.parentFile.mkdirs()
             rosLibDir.asFile.mkdirs()
-        }
-        val cmd = mutableListOf<String>()
-        cmd += gpp()
-        cmd += commonCompileFlags
-        cmd += jniIncludeArgs()
-        cmd += rosIncludeArgs()
-        cmd += listOf("-o", outSo.absolutePath, src.absolutePath)
+
+            // check if rcl_timer_init2 is available
+            val hasInit2 = probeOutFile.get().asFile.takeIf { it.exists() }?.readText()?.trim() == "1"
+
+            // build command for compiling the actual source file
+            val cmd = mutableListOf<String>()
+            cmd += gpp()
+            cmd += commonCompileFlags
+            if (hasInit2) {
+                cmd += "-DHAS_RCL_TIMER_INIT2=1"
+            }
+            cmd += jniIncludeArgs()
+            cmd += rosIncludeArgs()
+            cmd += listOf("-o", outSo.absolutePath, src.absolutePath)
         
-        if (rosLibOrg?.exists() == true) {
-            cmd += "-L${rosLibDir.asFile.absolutePath}"
-            moduleLib.forEach { cmd += "-l$it" }
+            if (rosLibOrg?.exists() == true) {
+                cmd += "-L${rosLibDir.asFile.absolutePath}"
+                moduleLib.forEach { cmd += "-l$it" }
+            }
+
+            commandLine(cmd)
+            // println(cmd.joinToString(" "))
         }
 
-        commandLine(cmd)
-        // println(cmd.joinToString(" "))
+        doLast {
+            exec { commandLine("bash", "-lc", "ldd -u ${outSo.absolutePath} || true") }
+        }
     }
     buildNative.configure { dependsOn(t) }
 }
