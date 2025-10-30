@@ -443,6 +443,26 @@ tasks.withType<Test>().configureEach {
         .joinToString(":")
     )
 
+    val rosPrefix = rosRoot?.absolutePath
+        ?: (System.getenv("ROS_ROOT")?.takeIf { it.isNotBlank() })
+        ?: "/opt/ros/humble"
+    val pathPrev  = System.getenv("PATH") ?: ""
+    val amentPrev = System.getenv("AMENT_PREFIX_PATH") ?: ""
+    val colconPrev= System.getenv("COLCON_PREFIX_PATH") ?: ""
+    val cmakePrev = System.getenv("CMAKE_PREFIX_PATH") ?: ""
+
+    environment("PATH", "$rosPrefix/bin:$pathPrev")
+    environment("LD_LIBRARY_PATH", "$rosPrefix/lib:${System.getenv("LD_LIBRARY_PATH") ?: ""}")
+    environment("AMENT_PREFIX_PATH", listOf(rosPrefix, amentPrev).filter { it.isNotBlank() }.joinToString(":"))
+    environment("COLCON_PREFIX_PATH", listOf(rosPrefix, colconPrev).filter { it.isNotBlank() }.joinToString(":"))
+    environment("CMAKE_PREFIX_PATH", listOf(rosPrefix, cmakePrev).filter { it.isNotBlank() }.joinToString(":"))
+
+    val rmw = when (rosDistro) {
+        "jazzy", "kilted" -> "rmw_cyclonedds_cpp"
+        else              -> "rmw_fastrtps_cpp"
+    }
+    environment("RMW_IMPLEMENTATION", rmw)
+
     doFirst {
         println("LD_LIBRARY_PATH for tests = ${System.getenv("LD_LIBRARY_PATH")}")
 
