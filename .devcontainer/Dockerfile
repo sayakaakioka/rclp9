@@ -13,8 +13,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN JHOME="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")" && \
-    echo "Detected JDK at ${JHOME}" && \
-    ln -sfn "${JHOME}" "/usr/lib/jvm/java-${JDK_VERSION}-openjdk"
+    echo "Detected JDK at ${JHOME}"
 
 ENV JAVA_HOME=/usr/lib/jvm/java-${JDK_VERSION}-openjdk
 ENV PATH="$JAVA_HOME/bin:${PATH}"
