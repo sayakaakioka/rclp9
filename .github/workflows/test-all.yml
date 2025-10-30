@@ -59,6 +59,13 @@ jobs:
           g++ --version || true
           echo "ROS_ROOT=${ROS_ROOT}"
           echo "JAVA_HOME=${JAVA_HOME}"
+      
+      - name: Debug X/GL
+        run: |
+          echo "DISPLAY=${DISPLAY:-<empty>}"
+          command -v Xvfb || echo "Xvfb not found"
+          dpkg -l | egrep 'xvfb|mesa|libgl' || true
+          ls -l /usr/lib/x86_64-linux-gnu/libGL.so* /usr/lib/x86_64-linux-gnu/libGLX* 2>/dev/null || true
 
       - name: Run tests
         run: ./gradlew --no-daemon clean test --stacktrace
