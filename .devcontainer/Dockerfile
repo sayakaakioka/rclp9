@@ -10,12 +10,11 @@ ARG JDK_VERSION=21
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends openjdk-${JDK_VERSION}-jdk git g++ && \
-    rm -rf /var/lib/apt/lists/* && \
-    arch="$(dpkg --print-architecture)" && \
-    jvmpath="/usr/lib/jvm/java-${JDK_VERSION}-openjdk-${arch}" && \
-    if [ -d "${jvmpath}" ] && [ ! -e "/usr/lib/jvm/java-${JDK_VERSION}-openjdk" ]; then \
-      ln -s "${jvmpath}" "/usr/lib/jvm/java-${JDK_VERSION}-openjdk"; \
-    fi
+    rm -rf /var/lib/apt/lists/*
+
+RUN JHOME="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")" && \
+    echo "Detected JDK at ${JHOME}" && \
+    ln -sfn "${JHOME}" "/usr/lib/jvm/java-${JDK_VERSION}-openjdk"
 
 ENV JAVA_HOME=/usr/lib/jvm/java-${JDK_VERSION}-openjdk
 ENV PATH="$JAVA_HOME/bin:${PATH}"
