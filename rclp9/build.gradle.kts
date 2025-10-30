@@ -444,6 +444,8 @@ tasks.withType<Test>().configureEach {
     )
 
     doFirst {
+        println("LD_LIBRARY_PATH for tests = ${System.getenv("LD_LIBRARY_PATH")}")
+        
         val hasDisplay = System.getenv("DISPLAY")?.isNotBlank() == true
         if (!hasDisplay) {
             exec {
