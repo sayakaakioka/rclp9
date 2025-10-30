@@ -456,12 +456,7 @@ tasks.withType<Test>().configureEach {
     environment("AMENT_PREFIX_PATH", listOf(rosPrefix, amentPrev).filter { it.isNotBlank() }.joinToString(":"))
     environment("COLCON_PREFIX_PATH", listOf(rosPrefix, colconPrev).filter { it.isNotBlank() }.joinToString(":"))
     environment("CMAKE_PREFIX_PATH", listOf(rosPrefix, cmakePrev).filter { it.isNotBlank() }.joinToString(":"))
-
-    val rmw = when (rosDistro) {
-        "jazzy", "kilted" -> "rmw_cyclonedds_cpp"
-        else              -> "rmw_fastrtps_cpp"
-    }
-    environment("RMW_IMPLEMENTATION", rmw)
+    environment("RMW_IMPLEMENTATION", "rmw_fastrtps_cpp")
 
     doFirst {
         println("LD_LIBRARY_PATH for tests = ${System.getenv("LD_LIBRARY_PATH")}")
