@@ -74,7 +74,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reports-x86_64-humble
+          name: reports-${{ matrix.arch }}-${{ matrix.distro }}-${{ matrix.java }}
           path: |
             rclp9/build/reports/tests/test
             rclp9/build/test-results/test
