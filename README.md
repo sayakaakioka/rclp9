@@ -1,79 +1,111 @@
 # rclp9
 
-# What is this?
+[![Build Status](https://github.com/sayakaakioka/rclp9/actions/workflows/test-all.yml/badge.svg?branch=main)](https://github.com/sayakaakioka/rclp9/actions/workflows/test-all.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-ROS2 minimal client library for Processing. Currently, a minimal publisher,
-a minimal subscriber, timer, and callback are available.
-The message types supported by the current version include:
-`builtin_interfaces.msg.Time`,
-`std_msgs.msg.Float64`,
-`std_msgs.msg.Header`,
-`std_msgs.msg.String`,
-`geometry_msgs.msg.Point`,
-`geometry_msgs.msg.Pose`,
-`geometry_msgs.msg.PoseStamped`,
-and `geometry_msgs.msg.Quaternion`.
-Examples can be found [here](https://github.com/sayakaakioka/rclp9/tree/main/rclp9/src/test/processing).
+## Overview
 
-Other functionalities are under development.
-Please note that only linux on x86 / arm is supported at this time.
+**rclp9** is a minimal ROS 2 client library for [Processing](https://processing.org/), providing a lightweight interface between Processing sketches and ROS2 nodes.  
+It currently supports basic publisher/subscriber communication, timers, and callback functionality, allowing Processing sketches to publish and subscribe to ROS 2 topics seamlessly.
 
-This library was developed with significant inspiration from
-[ROS 2 Java client library](https://github.com/ros2-java/ros2_java).
+Supported message types include:
 
-# Prerequirement
+- `builtin_interfaces.msg.Time`  
+- `std_msgs.msg.Float64`, `std_msgs.msg.Header`, `std_msgs.msg.String`  
+- `geometry_msgs.msg.Point`, `geometry_msgs.msg.Pose`, `geometry_msgs.msg.PoseStamped`, `geometry_msgs.msg.Quaternion`, `geometry_msgs.msg.Twist`, `geometry_msgs.msg.Vector3`
 
-ROS2, JDK-17, C++, Python3, and Processing must be installed beforehand.
+Example sketches can be found under  
+[`rclp9/src/test/processing`](https://github.com/sayakaakioka/rclp9/tree/main/rclp9/src/test/processing).
 
-# Installation
+This project was inspired by the [ROS2 Java client library](https://github.com/ros2-java/ros2_java).
 
-Clone the repository, and move into the project directory (<project_dir>).
+## Supported Platforms
+
+- **Operating Systems:** Linux (x86_64 and ARM64)
+- **ROS2 Distributions:** Humble, Jazzy, and Kilted  
+  (Fast DDS `rmw_fastrtps_cpp` is used by default)
+- **Java:** JDK 21 (toolchain-managed)
+- **Processing:** 4.x series
+- **C++:** 17 or newer
+
+## Development and Test Environment
+
+Development and automated testing of **rclp9** are performed using the  
+[**ros2-p5-dev**](https://github.com/sayakaakioka/ros2-p5-dev) Docker image family.
+
+These images provide a fully pre-configured environment with:
+- ROS2 (Humble / Jazzy / Kilted)
+- OpenJDK 21 and Gradle 8.x
+- Processing 4.x (portable build)
+- Mesa software OpenGL stack with Xvfb for headless execution
+
+Using this image ensures that the native (JNI) components, Processing tests, and ROS2 runtime behave consistently across CI and local environments.  
+Direct Docker or DevContainer development is *not* required or recommended for normal use.
+
+
+## Continuous Integration
+
+This repository is tested automatically on GitHub Actions under multiple configurations:
+
+| ROS 2 Distro | Architecture | Java |
+|---------------|---------------|-------|
+| Humble | x86_64 | JDK 21 |
+| Jazzy | x86_64 | JDK 21 |
+| Kilted | x86_64 | JDK 21 |
+| Humble | ARM64 | JDK 21 |
+| Jazzy | ARM64 | JDK 21 |
+| Kilted | ARM64 | JDK 21 |
+
+Each build runs Gradle 8.x–based compilation and JNI testing within a Docker container.  
+All tests pass across distros and architectures as of the latest CI run.
+
+## Building from Source
+
+Clone the repository and move into the project directory:
 
 ```bash
 git clone https://github.com/sayakaakioka/rclp9.git
-```
-
-```bash
 cd rclp9
 ```
 
-Set `LD_LIBRARY_PATH` and `JAVA_HOME`. `LD_LIBRARY_PATH` here is used for building the library and running tests. Please note that this `LD_LIBRARY_PATH` setting should be different from the setting used after installation.
+Set environment variables for the build:
 
 ```bash
-export LD_LIBRARY_PATH=<project_dir>/rclp9/libs/rclp9:<project_dir>/rclp9/libs/ros:<project_dir>/rclp9/libs
-export JAVA_HOME=<your_java_home>
+export LD_LIBRARY_PATH=$(pwd)/rclp9/libs/rclp9:$(pwd)/rclp9/libs/ros:$(pwd)/rclp9/libs
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 ```
 
-Build the library.
+Then build:
 
 ```bash
-./gradlew clean
-./gradlew build
+./gradlew clean build
 ```
 
-During the building process, you may happen to see the following message, especially on Ubuntu Linux.
-You can safely ignore it.
+Running Tests
 
-> "Path for java installation '/usr/lib/jvm/openjdk-17' (Common Linux Locations) does not contain a java executable"
-
-To generate the Javadoc for rclp9, execute the following command.
-The documentation will be available under the directory
-`rclp9/build/docs/javadoc`.
+All tests are executed via Gradle:
 
 ```bash
-./gradlew javadoc
+./gradlew test --info
 ```
 
-Now all the libraries for rclp9 should be ready. To use from Processing, simply copy
-all the libraries into the appropriate directory, and set `LD_LIBRARY_PATH`.
+## Installing into Processing
+
+Once built, copy the library to your Processing sketchbook:
 
 ```bash
 $ cp -r ./rclp9/build/rclp9 ${HOME}/sketchbook/libraries/
 ```
 
+Then set:
+
 ```bash
 export LD_LIBRARY_PATH=${HOME}/sketchbook/libraries/rclp9/library
 ```
 
-Launch the Processing IDE and enjoy! You can find an example of the minimal publisher and timer in
-`rclp9/src/test/processing` directory under the project directory.
+Launch the Processing IDE and open one of the example sketches (e.g., `MinimalPublisher` or `TimerExample`).
+
+## License
+
+This project is licensed under the [MIT License](https://img.shields.io/badge/License-MIT-blue.svg)
+.
