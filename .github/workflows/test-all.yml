@@ -68,7 +68,7 @@ jobs:
           ls -l /usr/lib/x86_64-linux-gnu/libGL.so* /usr/lib/x86_64-linux-gnu/libGLX* 2>/dev/null || true
 
       - name: Run tests
-        run: ./gradlew --no-daemon clean test --stacktrace
+        run: ./gradlew --no-daemon clean test --info
 
       - name: Upload test reports
         if: always()
