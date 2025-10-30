@@ -434,6 +434,15 @@ tasks.withType<Test>().configureEach {
     environment("NO_AT_BRIDGE", "1")
     systemProperty("jogl.disable.openglcore", "true")
 
+    val libDirRclp9 = file("${projectDir}/rclp9/libs/rclp9").absolutePath
+    val libDirRos   = file("${projectDir}/rclp9/libs/ros").absolutePath
+    val libDirRoot  = file("${projectDir}/rclp9/libs").absolutePath
+    val inherited   = System.getenv("LD_LIBRARY_PATH") ?: ""
+    environment("LD_LIBRARY_PATH", listOf(libDirRclp9, libDirRos, libDirRoot, inherited)
+        .filter { it.isNotBlank() }
+        .joinToString(":")
+    )
+
     doFirst {
         val hasDisplay = System.getenv("DISPLAY")?.isNotBlank() == true
         if (!hasDisplay) {
