@@ -426,6 +426,14 @@ tasks.named("test") {
 
 tasks.withType<Test>().configureEach {
     val pidFile = layout.buildDirectory.file("xvfb-${name}.pid").get().asFile
+
+    // for tests on Actions
+    environment("LIBGL_ALWAYS_SOFTWARE", "1")
+    environment("MESA_LOADER_DRIVER_OVERRIDE", "llvmpipe")
+    environment("__GLX_VENDOR_LIBRARY_NAME", "mesa")
+    environment("NO_AT_BRIDGE", "1")
+    systemProperty("jogl.disable.openglcore", "true")
+
     doFirst {
         val hasDisplay = System.getenv("DISPLAY")?.isNotBlank() == true
         if (!hasDisplay) {
