@@ -68,14 +68,7 @@ git clone https://github.com/sayakaakioka/rclp9.git
 cd rclp9
 ```
 
-Set environment variables for the build:
-
-```bash
-export LD_LIBRARY_PATH=$(pwd)/rclp9/libs/rclp9:$(pwd)/rclp9/libs/ros:$(pwd)/rclp9/libs
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
-```
-
-Then build:
+Build:
 
 ```bash
 ./gradlew clean build
