@@ -14,28 +14,22 @@ jobs:
           - arch: x86_64
             runner: ubuntu-22.04
             distro: humble
-            # java_home: /usr/lib/jvm/java-21-openjdk-amd64
           - arch: x86_64
             runner: ubuntu-24.04
             distro: jazzy
-            # java_home: /usr/lib/jvm/java-21-openjdk-amd64
           - arch: x86_64
             runner: ubuntu-24.04
             distro: kilted
-            # java_home: /usr/lib/jvm/java-21-openjdk-amd64
           # arm64
           - arch: arm64
             runner: ubuntu-22.04-arm
             distro: humble
-            # java_home: /usr/lib/jvm/java-21-openjdk-arm64
           - arch: arm64
             runner: ubuntu-24.04-arm
             distro: jazzy
-            # java_home: /usr/lib/jvm/java-21-openjdk-arm64
           - arch: arm64
             runner: ubuntu-24.04-arm
             distro: kilted
-            # java_home: /usr/lib/jvm/java-21-openjdk-arm64
 
     runs-on: ${{ matrix.runner }}
 
@@ -57,10 +51,10 @@ jobs:
           uname -m
           java -version
           g++ --version || true
-          echo "ROS_ROOT=${ROS_ROOT}"
-          echo "JAVA_HOME=${JAVA_HOME}"
+          echo "ROS_ROOT=${ROS_ROOT:-<empty>}"
+          echo "JAVA_HOME=${JAVA_HOME:-<empty>}"
       
-      - name: Debug X/GL
+      - name: X/GL (debug)
         run: |
           echo "DISPLAY=${DISPLAY:-<empty>}"
           command -v Xvfb || echo "Xvfb not found"
