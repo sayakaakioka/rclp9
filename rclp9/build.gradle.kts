@@ -17,7 +17,6 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
-
     maven { url = uri("https://jogamp.org/deployment/maven/") }
 }
 
@@ -61,7 +60,7 @@ testing{
                     jvmArgs(
                         "-Xcheck:jni",
                         "-Xlog:jni=trace",
-                        "-XX:ErrorFile=${buildDir}/hs_err_%p.log",
+                        "-XX:ErrorFile=${layout.buildDirectory.get().asFile}/hs_err_%p.log",
                         "-XX:+CreateCoredumpOnCrash"
                     )
                 }
@@ -72,30 +71,112 @@ testing{
 
 java{
     toolchain{
-        // The message, "Path for java installation '/usr/lib/jvm/openjdk-17' (Common Linux Locations)
-        // does not contain a java executable", is an expected behavior.
         languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
+fun detectRosRoot(): File? {
+    val candidates = listOf (
+        (findProperty("ROS_ROOT") as String?)?.ifBlank { null },
+        System.getenv("ROS_ROOT")?.ifBlank { null },
+        "/opt/ros/humble",
+        "/opt/ros/jazzy",
+        "/opt/ros/kilted"
+    ).filterNotNull()
+
+    return candidates.map(::File).firstOrNull { it.exists() }
+}
+
+val rosRoot: File? = detectRosRoot()
+val rosDistro: String? = rosRoot?.name
+val rosInclude: File? = rosRoot?.resolve("include")
+val rosLibOrg: File? = rosRoot?.resolve("lib")
+
+val baseModules = listOf(
+    "builtin_interfaces",
+    "geometry_msgs",
+    "rcl",
+    "rcl_yaml_param_parser",
+    "rcutils",
+    "rmw",
+    "rosidl_runtime_c",
+    "rosidl_typesupport_interface",
+    "std_msgs"
+)
+
+val extraModules = when (rosDistro) {
+    "kilted", "jazzy" -> listOf("service_msgs", "type_description_interfaces", "rosidl_dynamic_typesupport")
+    else -> emptyList()
+}
+
+val moduleInclude = baseModules + extraModules
+
+val baseLibs = listOf(
+    "ament_index_cpp",
+    "builtin_interfaces__rosidl_generator_c",
+    "builtin_interfaces__rosidl_typesupport_c",
+    "builtin_interfaces__rosidl_typesupport_fastrtps_c",
+    "builtin_interfaces__rosidl_typesupport_introspection_c",
+    "fastcdr",
+    "geometry_msgs__rosidl_generator_c",
+    "geometry_msgs__rosidl_typesupport_c",
+    "geometry_msgs__rosidl_typesupport_fastrtps_c",
+    "geometry_msgs__rosidl_typesupport_introspection_c",
+    "rcl",
+    "rcl_interfaces__rosidl_generator_c",
+    "rcl_interfaces__rosidl_typesupport_c",
+    "rcl_logging_interface",
+    "rcl_logging_spdlog",
+    "rcl_yaml_param_parser",
+    "rcpputils",
+    "rcutils",
+    "rmw",
+    "rmw_dds_common",
+    "rosidl_runtime_c",
+    "rosidl_typesupport_c",
+    "rosidl_typesupport_cpp",
+    "rosidl_typesupport_fastrtps_c",
+    "rosidl_typesupport_fastrtps_cpp",
+    "rosidl_typesupport_introspection_c",
+    "rosidl_typesupport_introspection_cpp",
+    "std_msgs__rosidl_generator_c",
+    "std_msgs__rosidl_typesupport_c",
+    "std_msgs__rosidl_typesupport_fastrtps_c",
+    "std_msgs__rosidl_typesupport_introspection_c",
+    "tracetools"
+)
+
+val extraLibs = when (rosDistro) {
+    "kilted", "jazzy" -> listOf(
+        "service_msgs__rosidl_generator_c",
+        "type_description_interfaces__rosidl_generator_c",
+        "type_description_interfaces__rosidl_typesupport_c",
+        "rosidl_dynamic_typesupport",
+        "rosidl_dynamic_typesupport_fastrtps"
+    )
+    else -> emptyList()
+}
+
+val moduleLib = baseLibs + extraLibs
+
 tasks.named("jar") {
     doLast {
         // copy rclp9 folder into your sketchbook/libraries
-        val target_dir = "${projectDir}/build/rclp9/library"
+        val targetDir = "${projectDir}/build/rclp9/library"
         exec {
-            commandLine("/usr/bin/mkdir", "-p", target_dir)
+            commandLine("/usr/bin/mkdir", "-p", targetDir)
         }
 
         copy {
             from("${projectDir}/build/libs")
-            into(target_dir)
+            into(targetDir)
             include("*.jar")
         }
 
         copy {
             from("${projectDir}/libs/ros")
             from("${projectDir}/libs/rclp9")
-            into(target_dir)
+            into(targetDir)
             include("lib*")
         }
     }
@@ -103,8 +184,7 @@ tasks.named("jar") {
 
 tasks.named<Delete>("clean"){
     doLast {
-        project.delete("${projectDir}/libs/rclp9")
-        project.delete("${projectDir}/libs/ros")
+        project.delete("${projectDir}/libs/rclp9", "${projectDir}/libs/ros")
     }
 }
 
@@ -117,216 +197,35 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("-h", jniHeadersDir.get().asFile.absolutePath))
 }
 
-val rosRoots = listOf("/opt/ros/kilted", "/opt/ros/jazzy", "/opt/ros/humble")
-val rosRootProp = (findProperty("ROS_ROOT") as String?)?.ifBlank { null }
-val rosRoot: File? = rosRootProp?.let(::File) ?: rosRoots.map(::File).firstOrNull { it.exists() }
-
-val rosDistro: String? = rosRoot?.name
-val rosInclude: File? = rosRoot?.resolve("include")
-val rosLibOrg: File? = rosRoot?.resolve("lib")
-
-val moduleInclude = when (rosDistro) {
-    "kilted" -> listOf(
-        "builtin_interfaces",
-        "geometry_msgs",
-        "rcl",
-        "rcl_yaml_param_parser",
-        "rcutils",
-        "rmw",
-        "rosidl_dynamic_typesupport",
-        "rosidl_runtime_c",
-        "rosidl_typesupport_interface",
-        "service_msgs",
-        "std_msgs",
-        "type_description_interfaces"
-    )
-    "jazzy" -> listOf(
-        "builtin_interfaces",
-        "geometry_msgs",
-        "rcl",
-        "rcl_yaml_param_parser",
-        "rcutils",
-        "rmw",
-        "rosidl_dynamic_typesupport",
-        "rosidl_runtime_c",
-        "rosidl_typesupport_interface",
-        "service_msgs",
-        "std_msgs",
-        "type_description_interfaces"
-    )
-    else -> listOf( // humble
-        "builtin_interfaces",
-        "geometry_msgs",
-        "rcl",
-        "rcl_yaml_param_parser",
-        "rcutils",
-        "rmw",
-        "rosidl_runtime_c",
-        "rosidl_typesupport_interface",
-        "std_msgs"
-    )
-}
-
-val moduleLib = when (rosDistro) {
-    "kilted" -> listOf(
-        "ament_index_cpp",
-        "builtin_interfaces__rosidl_generator_c",
-        "builtin_interfaces__rosidl_typesupport_c",
-        "builtin_interfaces__rosidl_typesupport_fastrtps_c",
-        "builtin_interfaces__rosidl_typesupport_introspection_c",
-        "fastcdr",
-        "fastdds",
-        "geometry_msgs__rosidl_generator_c",
-        "geometry_msgs__rosidl_typesupport_c",
-        "geometry_msgs__rosidl_typesupport_fastrtps_c",
-        "geometry_msgs__rosidl_typesupport_introspection_c",
-        "rcl",
-        "rcl_interfaces__rosidl_generator_c",
-        "rcl_interfaces__rosidl_typesupport_c",
-        "rcl_logging_interface",
-        "rcl_logging_spdlog",
-        "rcl_yaml_param_parser",
-        "rcpputils",
-        "rcutils",
-        "rmw",
-        "rmw_dds_common",
-        "rmw_dds_common__rosidl_generator_c",
-        "rmw_dds_common__rosidl_typesupport_cpp",
-        "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
-        "rmw_dds_common__rosidl_typesupport_introspection_cpp",
-        "rmw_fastrtps_shared_cpp",
-        "rmw_implementation",
-        "rmw_security_common",
-        "rosidl_dynamic_typesupport",
-        "rosidl_dynamic_typesupport_fastrtps",
-        "rosidl_runtime_c",
-        "rosidl_typesupport_c",
-        "rosidl_typesupport_cpp",
-        "rosidl_typesupport_fastrtps_c",
-        "rosidl_typesupport_fastrtps_cpp",
-        "rosidl_typesupport_introspection_c",
-        "rosidl_typesupport_introspection_cpp",
-        "service_msgs__rosidl_generator_c",
-        "std_msgs__rosidl_generator_c",
-        "std_msgs__rosidl_typesupport_c",
-        "std_msgs__rosidl_typesupport_fastrtps_c",
-        "std_msgs__rosidl_typesupport_introspection_c",
-        "tracetools",
-        "type_description_interfaces__rosidl_generator_c",
-        "type_description_interfaces__rosidl_typesupport_c"
-    )
-    "jazzy" -> listOf(
-        "ament_index_cpp",
-        "builtin_interfaces__rosidl_generator_c",
-        "builtin_interfaces__rosidl_typesupport_c",
-        "builtin_interfaces__rosidl_typesupport_fastrtps_c",
-        "builtin_interfaces__rosidl_typesupport_introspection_c",
-        "fastcdr",
-        "geometry_msgs__rosidl_generator_c",
-        "geometry_msgs__rosidl_typesupport_c",
-        "geometry_msgs__rosidl_typesupport_fastrtps_c",
-        "geometry_msgs__rosidl_typesupport_introspection_c",
-        "rcl",
-        "rcl_interfaces__rosidl_generator_c",
-        "rcl_interfaces__rosidl_typesupport_c",
-        "rcl_logging_interface",
-        "rcl_logging_spdlog",
-        "rcl_yaml_param_parser",
-        "rcpputils",
-        "rcutils",
-        "rmw",
-        "rmw_dds_common",
-        "rmw_dds_common__rosidl_generator_c",
-        "rmw_dds_common__rosidl_typesupport_cpp",
-        "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
-        "rmw_dds_common__rosidl_typesupport_introspection_cpp",
-        "rmw_fastrtps_shared_cpp",
-        "rmw_implementation",
-        "rosidl_dynamic_typesupport",
-        "rosidl_dynamic_typesupport_fastrtps",
-        "rosidl_runtime_c",
-        "rosidl_typesupport_c",
-        "rosidl_typesupport_cpp",
-        "rosidl_typesupport_fastrtps_c",
-        "rosidl_typesupport_fastrtps_cpp",
-        "rosidl_typesupport_introspection_c",
-        "rosidl_typesupport_introspection_cpp",
-        "service_msgs__rosidl_generator_c",
-        "std_msgs__rosidl_generator_c",
-        "std_msgs__rosidl_typesupport_c",
-        "std_msgs__rosidl_typesupport_fastrtps_c",
-        "std_msgs__rosidl_typesupport_introspection_c",
-        "tracetools",
-        "type_description_interfaces__rosidl_generator_c",
-        "type_description_interfaces__rosidl_typesupport_c"
-    )
-    else -> listOf( // humble
-        "ament_index_cpp",
-        "builtin_interfaces__rosidl_generator_c",
-        "builtin_interfaces__rosidl_typesupport_c",
-        "builtin_interfaces__rosidl_typesupport_fastrtps_c",
-        "builtin_interfaces__rosidl_typesupport_introspection_c",
-        "fastcdr",
-        "geometry_msgs__rosidl_generator_c",
-        "geometry_msgs__rosidl_typesupport_c",
-        "geometry_msgs__rosidl_typesupport_fastrtps_c",
-        "geometry_msgs__rosidl_typesupport_introspection_c",
-        "rcl",
-        "rcl_interfaces__rosidl_generator_c",
-        "rcl_interfaces__rosidl_typesupport_c",
-        "rcl_logging_interface",
-        "rcl_logging_spdlog",
-        "rcl_yaml_param_parser",
-        "rcpputils",
-        "rcutils",
-        "rmw",
-        "rmw_dds_common",
-        "rmw_dds_common__rosidl_generator_c",
-        "rmw_dds_common__rosidl_typesupport_cpp",
-        "rmw_dds_common__rosidl_typesupport_fastrtps_cpp",
-        "rmw_dds_common__rosidl_typesupport_introspection_cpp",
-        "rmw_fastrtps_shared_cpp",
-        "rmw_implementation",
-        "rosidl_runtime_c",
-        "rosidl_typesupport_c",
-        "rosidl_typesupport_cpp",
-        "rosidl_typesupport_fastrtps_c",
-        "rosidl_typesupport_fastrtps_cpp",
-        "rosidl_typesupport_introspection_c",
-        "rosidl_typesupport_introspection_cpp",
-        "std_msgs__rosidl_generator_c",
-        "std_msgs__rosidl_typesupport_c",
-        "std_msgs__rosidl_typesupport_fastrtps_c",
-        "std_msgs__rosidl_typesupport_introspection_c",
-        "tracetools"
-    )
-}
-
 fun jniIncludeArgs(): List<String> {
     val launcher = javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) }.get()
     val javaHome = launcher.metadata.installationPath.asFile
     val inc = javaHome.resolve("include")
     val osInc = inc.resolve("linux")
-    return listOf("-I${jniHeadersDir.get().asFile.absolutePath}", "-I${inc.absolutePath}", "-I${osInc.absolutePath}")
+    return listOf(
+        "-I${jniHeadersDir.get().asFile.absolutePath}",
+        "-I${inc.absolutePath}",
+        "-I${osInc.absolutePath}"
+    )
 }
 
 fun rosIncludeArgs(): List<String> =
-    if (rosInclude?.exists() == true) moduleInclude.map { "-I${rosInclude.resolve(it).absolutePath}" } else emptyList()
-
+    if (rosInclude?.exists() == true)
+        moduleInclude.map { "-I${rosInclude.resolve(it).absolutePath}" }
+    else emptyList()
 
 val rclp9LibDir: Directory = layout.projectDirectory.dir("libs/rclp9")
 val rosLibDir: Directory = layout.projectDirectory.dir("libs/ros")
 
 val syncRosLibs by tasks.registering(Sync::class) {
-    if ( rosLibOrg != null && rosLibOrg?.exists() == true && moduleLib.isNotEmpty() ){
-        from(rosLibOrg) {
-            include(moduleLib.map { "lib$it.so*" })
-        }
+    if (rosLibOrg != null && moduleLib.isNotEmpty()) {
+        from(rosLibOrg) { include(moduleLib.map { "lib$it.so*" }) }
         into(rosLibDir)
     }
 }
 
 fun gpp(): String = System.getenv("CXX") ?: "g++"
+
 val withDebug = (findProperty("nativeDebug") as String?)?.toBooleanStrictOrNull() ?: true
 val projectInclude = "${projectDir}/src/main/cpp/include"
 val commonCompileFlags = mutableListOf("-shared", "-fPIC", "-std=c++17", "-I${projectInclude}").apply { if (withDebug) add("-g") }
@@ -434,28 +333,26 @@ tasks.withType<Test>().configureEach {
     environment("NO_AT_BRIDGE", "1")
     systemProperty("jogl.disable.openglcore", "true")
 
-    val libDirRclp9 = file("${projectDir}/libs/rclp9").absolutePath
-    val libDirRos   = file("${projectDir}/libs/ros").absolutePath
-    val libDirRoot  = file("${projectDir}/libs").absolutePath
-    val inherited   = System.getenv("LD_LIBRARY_PATH") ?: ""
-    environment("LD_LIBRARY_PATH", listOf(libDirRclp9, libDirRos, libDirRoot, inherited)
-        .filter { it.isNotBlank() }
-        .joinToString(":")
+    val inherited = System.getenv("LD_LIBRARY_PATH") ?: ""
+    val rosPrefix = rosRoot?.absolutePath
+        ?: System.getenv("ROS_ROOT")?.takeIf { it.isNotBlank() }
+        ?: "/opt/ros/humble"
+    environment(
+        "LD_LIBRARY_PATH",
+        listOf(
+            "$rosPrefix/lib",
+            file("${projectDir}/libs/rclp9").absolutePath,
+            file("${projectDir}/libs/ros").absolutePath,
+            file("${projectDir}/libs").absolutePath,
+            inherited
+        ).filter { it.isNotBlank() }.joinToString(":")
     )
 
-    val rosPrefix = rosRoot?.absolutePath
-        ?: (System.getenv("ROS_ROOT")?.takeIf { it.isNotBlank() })
-        ?: "/opt/ros/humble"
     val pathPrev  = System.getenv("PATH") ?: ""
-    val amentPrev = System.getenv("AMENT_PREFIX_PATH") ?: ""
-    val colconPrev= System.getenv("COLCON_PREFIX_PATH") ?: ""
-    val cmakePrev = System.getenv("CMAKE_PREFIX_PATH") ?: ""
-
     environment("PATH", "$rosPrefix/bin:$pathPrev")
-    environment("LD_LIBRARY_PATH", "$rosPrefix/lib:${System.getenv("LD_LIBRARY_PATH") ?: ""}")
-    environment("AMENT_PREFIX_PATH", listOf(rosPrefix, amentPrev).filter { it.isNotBlank() }.joinToString(":"))
-    environment("COLCON_PREFIX_PATH", listOf(rosPrefix, colconPrev).filter { it.isNotBlank() }.joinToString(":"))
-    environment("CMAKE_PREFIX_PATH", listOf(rosPrefix, cmakePrev).filter { it.isNotBlank() }.joinToString(":"))
+    environment("AMENT_PREFIX_PATH", listOf(rosPrefix, System.getenv("AMENT_PREFIX_PATH") ?: "").filter { it.isNotBlank() }.joinToString(":"))
+    environment("COLCON_PREFIX_PATH", listOf(rosPrefix, System.getenv("COLCON_PREFIX_PATH") ?: "").filter { it.isNotBlank() }.joinToString(":"))
+    environment("CMAKE_PREFIX_PATH", listOf(rosPrefix, System.getenv("CMAKE_PREFIX_PATH") ?: "").filter { it.isNotBlank() }.joinToString(":"))
     environment("RMW_IMPLEMENTATION", "rmw_fastrtps_cpp")
 
     doFirst {

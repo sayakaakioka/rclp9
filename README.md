@@ -98,6 +98,11 @@ export LD_LIBRARY_PATH=${HOME}/sketchbook/libraries/rclp9/library
 
 Launch the Processing IDE and open one of the example sketches (e.g., `MinimalPublisher` or `TimerExample`).
 
+By default, the build task copies the required ROS2 shared libraries into `libs/ros` to
+make the JNI tests reporoducible.
+If you prefer to use the system-wide ROS2 installation, you can disable this sync task
+and set `LD_LIBRARY_PATH` to `/opt/ros/<distro>/lib` instead.
+
 ## License
 
 This project is licensed under the [MIT License](https://img.shields.io/badge/License-MIT-blue.svg)
